@@ -1,10 +1,13 @@
 // CodexStorage.js
-// Handles persistent storage of Codex entries with safe localStorage access.
+// Handles persistent storage of Codex entries using IndexedDB with localStorage migration.
 
 (function () {
-    const STORAGE_KEY = "codexEntries";
+    const DB_NAME = "CodexDB";
+    const STORE_NAME = "entries";
+    const STORAGE_KEY = "codexEntries"; // legacy localStorage key (for migration only)
     const SCHEMA_VERSION = 2;
 
+    let db = null;
     let memoryStore = [];
 
     function generateId() {
@@ -35,34 +38,91 @@
         return entries.map(validateEntry);
     }
 
-    function loadEntries() {
+    function getDB() {
+        if (db) return Promise.resolve(db);
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = (e) => {
+                const dbInstance = e.target.result;
+                if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
+                    dbInstance.createObjectStore(STORE_NAME, { keyPath: "id" });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve(db);
+            };
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function migrateFromLocalStorage() {
         const raw = window.StorageHelper.safeGetItem(STORAGE_KEY);
-        if (!raw) {
-            return memoryStore.slice();
-        }
+        if (!raw) return null;
         try {
             const parsed = JSON.parse(raw);
-            const normalized = normalizeEntries(parsed);
-            memoryStore = normalized.slice();
-            return normalized;
+            const entries = normalizeEntries(parsed);
+            window.StorageHelper.safeRemoveItem(STORAGE_KEY);
+            return entries;
         } catch (e) {
-            console.error("Failed to parse stored entries:", e);
-            return memoryStore.slice();
+            console.warn("Migration failed:", e);
+            return null;
         }
     }
 
-    function saveEntries(entries) {
+    async function loadEntries() {
+        const dbInstance = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = dbInstance.transaction(STORE_NAME, "readonly");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.getAll();
+            request.onsuccess = async () => {
+                let entries = request.result || [];
+                if (entries.length === 0) {
+                    const migrated = await migrateFromLocalStorage();
+                    if (migrated && migrated.length > 0) {
+                        entries = migrated;
+                        await saveEntries(entries);
+                    }
+                }
+                const normalized = normalizeEntries(entries);
+                memoryStore = normalized.slice();
+                resolve(normalized);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function saveEntries(entries) {
         const normalized = normalizeEntries(entries);
         memoryStore = normalized.slice();
-        try {
-            window.StorageHelper.safeSetItem(STORAGE_KEY, JSON.stringify(normalized));
-        } catch (e) {
-            console.error("Failed to save entries:", e);
-        }
+        const dbInstance = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = dbInstance.transaction(STORE_NAME, "readwrite");
+            const store = transaction.objectStore(STORE_NAME);
+            const clearRequest = store.clear();
+            clearRequest.onsuccess = () => {
+                let index = 0;
+                function putNext() {
+                    if (index >= normalized.length) {
+                        resolve();
+                        return;
+                    }
+                    const putRequest = store.put(normalized[index]);
+                    putRequest.onsuccess = () => {
+                        index++;
+                        putNext();
+                    };
+                    putRequest.onerror = () => reject(putRequest.error);
+                }
+                putNext();
+            };
+            clearRequest.onerror = () => reject(clearRequest.error);
+        });
     }
 
-    function exportEntries() {
-        const entries = loadEntries();
+    async function exportEntries() {
+        const entries = await loadEntries();
         const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -77,11 +137,11 @@
     function importEntriesFromFile(file, options) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
                 try {
                     const parsed = JSON.parse(reader.result);
                     const imported = normalizeEntries(parsed);
-                    const current = loadEntries();
+                    const current = await loadEntries();
                     let merged;
                     if (options && options.merge) {
                         const byId = new Map();
@@ -91,7 +151,7 @@
                     } else {
                         merged = imported;
                     }
-                    saveEntries(merged);
+                    await saveEntries(merged);
                     resolve(merged);
                 } catch (e) {
                     reject(e);

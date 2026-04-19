@@ -129,14 +129,26 @@ function setupSettingsUI() {
         });
     }
 
-    // LocalStorage Usage Detection + Clear functionality
+    // LocalStorage + IndexedDB clear functionality
     const clearStorageBtn = document.getElementById("clear-storage-btn");
     if (clearStorageBtn) {
-        clearStorageBtn.addEventListener("click", () => {
-            if (confirm("⚠️ This will permanently delete ALL data in LocalStorage (Codex entries, drafts, and settings). Continue?")) {
+        clearStorageBtn.addEventListener("click", async () => {
+            if (confirm("⚠️ This will permanently delete ALL data in LocalStorage (Codex entries, drafts, and settings) AND the IndexedDB database. Continue?")) {
                 StorageHelper.clearAll();
+                if ('indexedDB' in window) {
+                    try {
+                        await new Promise((resolve) => {
+                            const req = indexedDB.deleteDatabase("CodexDB");
+                            req.onsuccess = resolve;
+                            req.onerror = resolve;
+                            req.onblocked = resolve;
+                        });
+                    } catch (e) {
+                        console.warn("IndexedDB delete failed (proceeding with reload):", e);
+                    }
+                }
                 updateStorageInfo();
-                alert("LocalStorage has been cleared.");
+                alert("LocalStorage and IndexedDB have been cleared.");
                 location.reload();
             }
         });
@@ -294,15 +306,31 @@ function loadSettings() {
     }
 }
 
-function updateStorageInfo() {
-    const usedBytes = StorageHelper.getSize();
-    const QUOTA_BYTES = 5242880; // 5 MB typical quota
-    const usedKB = Math.round(usedBytes / 1024);
-    const quotaMB = (QUOTA_BYTES / (1024 * 1024)).toFixed(1);
-    const percent = Math.min(100, Math.round((usedBytes / QUOTA_BYTES) * 100));
-
+async function updateStorageInfo() {
     const progressBar = document.getElementById("storage-progress-bar");
     const detailsEl = document.getElementById("storage-details");
+
+    let usedBytes = 0;
+    let quotaBytes = 5242880; // 5 MB fallback
+    let isEstimate = false;
+
+    if ('storage' in navigator && typeof navigator.storage.estimate === 'function') {
+        try {
+            const estimate = await navigator.storage.estimate();
+            usedBytes = estimate.usage || 0;
+            quotaBytes = estimate.quota || 5242880;
+            isEstimate = true;
+        } catch (e) {
+            console.warn("Storage estimate failed, falling back to localStorage:", e);
+            usedBytes = StorageHelper.getSize();
+        }
+    } else {
+        usedBytes = StorageHelper.getSize();
+    }
+
+    const usedKB = Math.round(usedBytes / 1024);
+    const quotaMB = (quotaBytes / (1024 * 1024)).toFixed(1);
+    const percent = Math.min(100, Math.round((usedBytes / quotaBytes) * 100));
 
     if (progressBar) {
         progressBar.style.width = `${percent}%`;
@@ -315,6 +343,10 @@ function updateStorageInfo() {
         }
     }
     if (detailsEl) {
-        detailsEl.innerHTML = `<strong>${usedKB} KB</strong> of ${quotaMB} MB (${percent}%)`;
+        let text = `<strong>${usedKB} KB</strong> of ${quotaMB} MB (${percent}%)`;
+        if (isEstimate) {
+            text += ` <span style="font-size:0.8em;color:#666;">(IndexedDB + localStorage)</span>`;
+        }
+        detailsEl.innerHTML = text;
     }
 }
