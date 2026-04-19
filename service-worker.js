@@ -1,4 +1,4 @@
-const CACHE_NAME = "codex-cache-v2";
+const CACHE_NAME = "codex-cache-v3";
 
 const CORE_ASSETS = [
   "index.html",
