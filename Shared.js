@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Load global navigation
     const nav = document.getElementById("global-nav");
     if (nav) {
         nav.innerHTML = `
@@ -11,7 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
-    // Load settings panel from SettingsPanel.html
     const settingsContainer = document.getElementById("global-settings");
     if (settingsContainer) {
         fetch("SettingsPanel.html")

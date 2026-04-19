@@ -1,322 +1,432 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const tabsContainer = document.getElementById("codex-tabs");
-    const filtersSection = document.getElementById("codex-filters");
-    const searchInput = document.getElementById("codex-search-input");
-    const tagFilterInput = document.getElementById("codex-tag-filter");
-    const favoriteFilterCheckbox = document.getElementById("codex-favorite-filter");
-    const favoriteFilterLabel = document.getElementById("codex-favorite-filter-label");
-    const newSection = document.getElementById("codex-new");
-    const listSection = document.getElementById("codex-list");
-
-    let currentCategoryKey = "entries";
-
-    function getCategoryConfig(key) {
-        return CATEGORIES[key];
-    }
-
-    function buildTabs() {
-        tabsContainer.innerHTML = "";
-        Object.keys(CATEGORIES).forEach(key => {
-            const cfg = CATEGORIES[key];
-            const btn = document.createElement("button");
-            btn.className = "tab-button";
-            btn.textContent = cfg.label;
-            btn.dataset.category = key;
-            if (key === currentCategoryKey) {
-                btn.classList.add("active");
-            }
-            btn.addEventListener("click", () => {
-                currentCategoryKey = key;
-                updateActiveTab();
-                renderCategoryUI();
-            });
-            tabsContainer.appendChild(btn);
-        });
-    }
-
-    function updateActiveTab() {
-        const buttons = tabsContainer.querySelectorAll(".tab-button");
-        buttons.forEach(btn => {
-            if (btn.dataset.category === currentCategoryKey) {
-                btn.classList.add("active");
-            } else {
-                btn.classList.remove("active");
-            }
-        });
-    }
-
-    function parseTags(value) {
-        return value
-            .split(",")
-            .map(t => t.trim())
-            .filter(t => t.length > 0);
-    }
-
-    function tagsToString(tags) {
-        if (!Array.isArray(tags)) return "";
-        return tags.join(", ");
-    }
-
-    function buildNewForm() {
-        const cfg = getCategoryConfig(currentCategoryKey);
-        newSection.innerHTML = "";
-
-        const container = document.createElement("div");
-        container.className = "codex-new-inner";
-
-        cfg.fields.forEach(field => {
-            const wrapper = document.createElement("div");
-            wrapper.className = "codex-field-wrapper";
-
-            const label = document.createElement("label");
-            label.textContent = field.label;
-            label.className = "codex-field-label";
-
-            let input;
-            if (field.type === "textarea") {
-                input = document.createElement("textarea");
-                input.className = "codex-input codex-textarea";
-            } else {
-                input = document.createElement("input");
-                input.type = "text";
-                input.className = "codex-input";
-            }
-
-            input.dataset.fieldName = field.name;
-            wrapper.appendChild(label);
-            wrapper.appendChild(input);
-            container.appendChild(wrapper);
-        });
-
-        const addButton = document.createElement("button");
-        addButton.textContent = "Add " + cfg.label.slice(0, -1);
-        addButton.className = "codex-add-button";
-        addButton.style.backgroundColor = cfg.color;
-
-        addButton.addEventListener("click", () => {
-            const data = {};
-            let tagsArray = [];
-
-            const inputs = container.querySelectorAll(".codex-input, .codex-textarea");
-            inputs.forEach(input => {
-                const fieldName = input.dataset.fieldName;
-                const fieldCfg = cfg.fields.find(f => f.name === fieldName);
-                const value = input.value.trim();
-
-                if (fieldCfg.type === "tags") {
-                    tagsArray = parseTags(value);
-                } else {
-                    data[fieldName] = value;
-                }
-            });
-
-            if (cfg.supportsTags) {
-                data.tags = tagsArray;
-            }
-
-            const hasContent = Object.values(data).some(v => typeof v === "string" && v.length > 0);
-            if (!hasContent) return;
-
-            CodexStorage.addItem(cfg.key, data, cfg.supportsFavorite, cfg.supportsTags);
-
-            inputs.forEach(input => {
-                input.value = "";
-            });
-
-            renderList();
-        });
-
-        newSection.appendChild(container);
-        newSection.appendChild(addButton);
-    }
-
-    function itemMatchesFilters(item, cfg) {
-        const search = searchInput.value.trim().toLowerCase();
-        const tagFilter = tagFilterInput.value.trim().toLowerCase();
-        const favoritesOnly = favoriteFilterCheckbox.checked && cfg.supportsFavorite;
-
-        if (favoritesOnly && !item.favorite) {
-            return false;
+const CodexUI = (function () {
+    let state = {
+        entries: [],
+        filters: {
+            searchTerm: "",
+            tag: "",
+            favoritesOnly: false
         }
+    };
 
-        if (tagFilter && cfg.supportsTags) {
-            const tags = Array.isArray(item.tags) ? item.tags : [];
-            const hasTag = tags.some(t => t.toLowerCase().includes(tagFilter));
-            if (!hasTag) return false;
-        }
+    let refs = {
+        app: null,
+        filtersContainer: null,
+        toolsContainer: null,
+        newContainer: null,
+        listContainer: null,
+        importInput: null
+    };
 
-        if (search) {
-            const haystackParts = [];
-            cfg.fields.forEach(field => {
-                const name = field.name;
-                if (name === "tags") return;
-                const value = item[name];
-                if (typeof value === "string") {
-                    haystackParts.push(value.toLowerCase());
-                }
-            });
-            const haystack = haystackParts.join(" ");
-            if (!haystack.includes(search)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    function buildCard(item, cfg) {
-        const card = document.createElement("div");
-        card.className = "codex-card";
-        card.style.borderTopColor = cfg.color;
-
-        const header = document.createElement("div");
-        header.className = "codex-card-header";
-
-        const titleField = cfg.fields[0];
-        const titleInput = document.createElement("input");
-        titleInput.type = "text";
-        titleInput.className = "codex-card-title-input";
-        titleInput.value = item[titleField.name] || "";
-        titleInput.dataset.fieldName = titleField.name;
-
-        header.appendChild(titleInput);
-
-        if (cfg.supportsFavorite) {
-            const favBtn = document.createElement("button");
-            favBtn.className = "codex-favorite-button";
-            favBtn.textContent = item.favorite ? "★" : "☆";
-            favBtn.addEventListener("click", () => {
-                CodexStorage.toggleFavorite(cfg.key, item.id);
-                renderList();
-            });
-            header.appendChild(favBtn);
-        }
-
-        card.appendChild(header);
-
-        cfg.fields.slice(1).forEach(field => {
-            const row = document.createElement("div");
-            row.className = "codex-card-row";
-
-            const label = document.createElement("div");
-            label.className = "codex-card-label";
-            label.textContent = field.label + ":";
-
-            let input;
-            if (field.type === "textarea") {
-                input = document.createElement("textarea");
-                input.className = "codex-card-input codex-card-textarea";
-                input.value = item[field.name] || "";
-            } else if (field.type === "tags") {
-                input = document.createElement("input");
-                input.type = "text";
-                input.className = "codex-card-input";
-                input.value = tagsToString(item.tags);
-            } else {
-                input = document.createElement("input");
-                input.type = "text";
-                input.className = "codex-card-input";
-                input.value = item[field.name] || "";
-            }
-
-            input.dataset.fieldName = field.name;
-
-            row.appendChild(label);
-            row.appendChild(input);
-            card.appendChild(row);
-        });
-
-        const buttonsRow = document.createElement("div");
-        buttonsRow.className = "codex-card-buttons";
-
-        const saveBtn = document.createElement("button");
-        saveBtn.textContent = "Save";
-        saveBtn.className = "codex-save-button";
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Delete";
-        deleteBtn.className = "codex-delete-button";
-
-        saveBtn.addEventListener("click", () => {
-            const updates = {};
-            let tagsArray = item.tags;
-
-            const inputs = card.querySelectorAll(".codex-card-input, .codex-card-title-input, .codex-card-textarea");
-            inputs.forEach(input => {
-                const fieldName = input.dataset.fieldName;
-                const fieldCfg = cfg.fields.find(f => f.name === fieldName);
-                const value = input.value;
-
-                if (fieldCfg.type === "tags") {
-                    tagsArray = parseTags(value);
-                } else {
-                    updates[fieldName] = value;
-                }
-            });
-
-            if (cfg.supportsTags) {
-                updates.tags = tagsArray;
-            }
-
-            CodexStorage.updateItem(cfg.key, item.id, updates, cfg.supportsTags);
-            renderList();
-        });
-
-        deleteBtn.addEventListener("click", () => {
-            CodexStorage.deleteItem(cfg.key, item.id);
-            renderList();
-        });
-
-        buttonsRow.appendChild(saveBtn);
-        buttonsRow.appendChild(deleteBtn);
-        card.appendChild(buttonsRow);
-
-        return card;
-    }
-
-    function renderList() {
-        const cfg = getCategoryConfig(currentCategoryKey);
-        const items = CodexStorage.loadCategory(cfg.key);
-        listSection.innerHTML = "";
-
-        const filtered = items.filter(item => itemMatchesFilters(item, cfg));
-
-        if (filtered.length === 0) {
-            const empty = document.createElement("div");
-            empty.className = "codex-empty";
-            empty.textContent = "No " + cfg.label.toLowerCase() + " found.";
-            listSection.appendChild(empty);
+    function initCodexUI() {
+        refs.app = document.getElementById("codex-app");
+        if (!refs.app) {
             return;
         }
 
-        filtered.forEach(item => {
-            const card = buildCard(item, cfg);
-            listSection.appendChild(card);
-        });
+        refs.filtersContainer = document.getElementById("codex-filters");
+        refs.toolsContainer = document.getElementById("codex-tools");
+        refs.newContainer = document.getElementById("codex-new");
+        refs.listContainer = document.getElementById("codex-list");
+        refs.importInput = document.getElementById("codex-import-input");
+
+        state.entries = loadEntries();
+        renderAll();
+        bindStaticEvents();
     }
 
-    function renderCategoryUI() {
-        const cfg = getCategoryConfig(currentCategoryKey);
+    function bindStaticEvents() {
+        if (refs.filtersContainer) {
+            const searchInput = refs.filtersContainer.querySelector("#codex-search-input");
+            const tagSelect = refs.filtersContainer.querySelector("#codex-tag-select");
+            const favoriteCheckbox = refs.filtersContainer.querySelector("#codex-favorite-only");
 
-        if (cfg.supportsFavorite) {
-            favoriteFilterLabel.classList.remove("hidden");
-        } else {
-            favoriteFilterLabel.classList.add("hidden");
-            favoriteFilterCheckbox.checked = false;
+            if (searchInput) {
+                searchInput.addEventListener("input", () => {
+                    state.filters.searchTerm = searchInput.value;
+                    renderList();
+                });
+            }
+
+            if (tagSelect) {
+                tagSelect.addEventListener("change", () => {
+                    state.filters.tag = tagSelect.value;
+                    renderList();
+                });
+            }
+
+            if (favoriteCheckbox) {
+                favoriteCheckbox.addEventListener("change", () => {
+                    state.filters.favoritesOnly = favoriteCheckbox.checked;
+                    renderList();
+                });
+            }
         }
 
-        searchInput.value = "";
-        tagFilterInput.value = "";
-        favoriteFilterCheckbox.checked = false;
+        if (refs.toolsContainer) {
+            const exportButton = refs.toolsContainer.querySelector("#codex-export-button");
+            const importButton = refs.toolsContainer.querySelector("#codex-import-button");
 
-        buildNewForm();
+            if (exportButton) {
+                exportButton.addEventListener("click", () => {
+                    exportEntries();
+                });
+            }
+
+            if (importButton && refs.importInput) {
+                importButton.addEventListener("click", () => {
+                    refs.importInput.click();
+                });
+
+                refs.importInput.addEventListener("change", () => {
+                    const file = refs.importInput.files[0];
+                    if (!file) {
+                        return;
+                    }
+                    importEntriesFromFile(file, { merge: true })
+                        .then(entries => {
+                            state.entries = entries;
+                            refs.importInput.value = "";
+                            renderAll();
+                        })
+                        .catch(() => {
+                            alert("Invalid Codex entries file.");
+                            refs.importInput.value = "";
+                        });
+                });
+            }
+        }
+
+        if (refs.newContainer) {
+            const form = refs.newContainer.querySelector("#codex-new-form");
+            if (form) {
+                form.addEventListener("submit", event => {
+                    event.preventDefault();
+                    const titleInput = form.querySelector("#codex-new-title");
+                    const descriptionInput = form.querySelector("#codex-new-description");
+                    const notesInput = form.querySelector("#codex-new-notes");
+                    const tagsInput = form.querySelector("#codex-new-tags");
+
+                    const title = titleInput ? titleInput.value.trim() : "";
+                    const description = descriptionInput ? descriptionInput.value.trim() : "";
+                    const notes = notesInput ? notesInput.value.trim() : "";
+                    const tagsRaw = tagsInput ? tagsInput.value : "";
+                    const tags = tagsRaw
+                        .split(",")
+                        .map(t => t.trim())
+                        .filter(t => t.length > 0);
+
+                    const entry = validateEntry({
+                        id: crypto.randomUUID(),
+                        title,
+                        description,
+                        notes,
+                        favorite: false,
+                        tags
+                    });
+
+                    state.entries.push(entry);
+                    state.entries = saveEntries(state.entries);
+                    form.reset();
+                    renderAll();
+                });
+            }
+        }
+
+        if (refs.listContainer) {
+            refs.listContainer.addEventListener("click", event => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const card = target.closest(".codex-card");
+                if (!card) {
+                    return;
+                }
+                const id = card.getAttribute("data-entry-id");
+                if (!id) {
+                    return;
+                }
+
+                if (target.classList.contains("codex-favorite-button")) {
+                    toggleFavorite(id);
+                } else if (target.classList.contains("codex-save-button")) {
+                    saveCardEdits(card, id);
+                } else if (target.classList.contains("codex-delete-button")) {
+                    deleteEntry(id);
+                }
+            });
+        }
+    }
+
+    function toggleFavorite(id) {
+        const entry = state.entries.find(e => e.id === id);
+        if (!entry) {
+            return;
+        }
+        entry.favorite = !entry.favorite;
+        state.entries = saveEntries(state.entries);
         renderList();
     }
 
-    searchInput.addEventListener("input", renderList);
-    tagFilterInput.addEventListener("input", renderList);
-    favoriteFilterCheckbox.addEventListener("change", renderList);
+    function saveCardEdits(card, id) {
+        const entry = state.entries.find(e => e.id === id);
+        if (!entry) {
+            return;
+        }
 
-    buildTabs();
-    renderCategoryUI();
+        const titleInput = card.querySelector(".codex-card-title-input");
+        const descriptionInput = card.querySelector(".codex-card-input[data-field='description']");
+        const notesInput = card.querySelector(".codex-card-textarea[data-field='notes']");
+        const tagsInput = card.querySelector(".codex-card-input[data-field='tags']");
+
+        entry.title = titleInput ? titleInput.value : entry.title;
+        entry.description = descriptionInput ? descriptionInput.value : entry.description;
+        entry.notes = notesInput ? notesInput.value : entry.notes;
+
+        if (tagsInput) {
+            entry.tags = tagsInput.value
+                .split(",")
+                .map(t => t.trim())
+                .filter(t => t.length > 0);
+        }
+
+        state.entries = saveEntries(state.entries);
+        renderAll();
+    }
+
+    function deleteEntry(id) {
+        if (!confirm("Delete this entry?")) {
+            return;
+        }
+        state.entries = state.entries.filter(e => e.id !== id);
+        state.entries = saveEntries(state.entries);
+        renderAll();
+    }
+
+    function renderAll() {
+        renderFilters();
+        renderTools();
+        renderNewForm();
+        renderList();
+    }
+
+    function renderFilters() {
+        if (!refs.filtersContainer) {
+            return;
+        }
+
+        const tags = getAllTags(state.entries);
+        const selectedTag = state.filters.tag;
+
+        refs.filtersContainer.innerHTML = `
+            <input
+                id="codex-search-input"
+                class="codex-filter-input"
+                type="search"
+                placeholder="Search Codex..."
+                aria-label="Search Codex entries"
+                value="${state.filters.searchTerm.replace(/"/g, "&quot;")}"
+            >
+            <select
+                id="codex-tag-select"
+                class="codex-filter-select"
+                aria-label="Filter by tag"
+            >
+                <option value="">All tags</option>
+                ${tags
+                    .map(
+                        tag => `<option value="${tag.replace(/"/g, "&quot;")}" ${
+                            tag === selectedTag ? "selected" : ""
+                        }>${tag}</option>`
+                    )
+                    .join("")}
+            </select>
+            <label class="codex-filter-favorite">
+                <input
+                    id="codex-favorite-only"
+                    type="checkbox"
+                    ${state.filters.favoritesOnly ? "checked" : ""}
+                >
+                Favorites only
+            </label>
+        `;
+    }
+
+    function renderTools() {
+        if (!refs.toolsContainer) {
+            return;
+        }
+
+        refs.toolsContainer.innerHTML = `
+            <button
+                id="codex-export-button"
+                class="codex-tool-button"
+                type="button"
+            >
+                Export entries
+            </button>
+            <button
+                id="codex-import-button"
+                class="codex-tool-button"
+                type="button"
+            >
+                Import entries
+            </button>
+            <input
+                id="codex-import-input"
+                type="file"
+                accept=".json"
+                hidden
+            >
+        `;
+
+        refs.importInput = document.getElementById("codex-import-input");
+    }
+
+    function renderNewForm() {
+        if (!refs.newContainer) {
+            return;
+        }
+
+        refs.newContainer.innerHTML = `
+            <form id="codex-new-form" class="codex-new-inner" aria-label="Create new Codex entry">
+                <div class="codex-field-wrapper">
+                    <label class="codex-field-label" for="codex-new-title">Title</label>
+                    <input
+                        id="codex-new-title"
+                        class="codex-input"
+                        type="text"
+                        required
+                    >
+                </div>
+                <div class="codex-field-wrapper">
+                    <label class="codex-field-label" for="codex-new-description">Description</label>
+                    <input
+                        id="codex-new-description"
+                        class="codex-input"
+                        type="text"
+                    >
+                </div>
+                <div class="codex-field-wrapper">
+                    <label class="codex-field-label" for="codex-new-notes">Notes</label>
+                    <textarea
+                        id="codex-new-notes"
+                        class="codex-input codex-textarea"
+                    ></textarea>
+                </div>
+                <div class="codex-field-wrapper">
+                    <label class="codex-field-label" for="codex-new-tags">Tags (comma-separated)</label>
+                    <input
+                        id="codex-new-tags"
+                        class="codex-input"
+                        type="text"
+                    >
+                </div>
+                <button
+                    type="submit"
+                    class="codex-add-button"
+                >
+                    Add entry
+                </button>
+            </form>
+        `;
+    }
+
+    function renderList() {
+        if (!refs.listContainer) {
+            return;
+        }
+
+        const filtered = filterEntries(state.entries, state.filters);
+
+        if (filtered.length === 0) {
+            refs.listContainer.innerHTML = `<div class="codex-empty">No entries match your filters.</div>`;
+            return;
+        }
+
+        refs.listContainer.innerHTML = filtered
+            .map(entry => renderCard(entry))
+            .join("");
+    }
+
+    function renderCard(entry) {
+        const tagsValue = Array.isArray(entry.tags) ? entry.tags.join(", ") : "";
+        const favoriteLabel = entry.favorite ? "Unfavorite entry" : "Favorite entry";
+
+        return `
+            <article
+                class="codex-card"
+                data-entry-id="${entry.id}"
+                aria-label="Codex entry"
+            >
+                <header class="codex-card-header">
+                    <input
+                        class="codex-card-title-input"
+                        type="text"
+                        value="${(entry.title || "").replace(/"/g, "&quot;")}"
+                        aria-label="Entry title"
+                    >
+                    <button
+                        type="button"
+                        class="codex-favorite-button"
+                        aria-pressed="${entry.favorite ? "true" : "false"}"
+                        aria-label="${favoriteLabel}"
+                    >
+                        ${entry.favorite ? "★" : "☆"}
+                    </button>
+                </header>
+                <div class="codex-card-row">
+                    <span class="codex-card-label">Description</span>
+                    <input
+                        class="codex-card-input"
+                        type="text"
+                        data-field="description"
+                        value="${(entry.description || "").replace(/"/g, "&quot;")}"
+                        aria-label="Entry description"
+                    >
+                </div>
+                <div class="codex-card-row">
+                    <span class="codex-card-label">Notes</span>
+                    <textarea
+                        class="codex-card-input codex-card-textarea"
+                        data-field="notes"
+                        aria-label="Entry notes"
+                    >${entry.notes || ""}</textarea>
+                </div>
+                <div class="codex-card-row">
+                    <span class="codex-card-label">Tags</span>
+                    <input
+                        class="codex-card-input"
+                        type="text"
+                        data-field="tags"
+                        value="${tagsValue.replace(/"/g, "&quot;")}"
+                        aria-label="Entry tags"
+                    >
+                </div>
+                <div class="codex-card-buttons">
+                    <button
+                        type="button"
+                        class="codex-save-button"
+                    >
+                        Save
+                    </button>
+                    <button
+                        type="button"
+                        class="codex-delete-button"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </article>
+        `;
+    }
+
+    return {
+        initCodexUI
+    };
+})();
+
+document.addEventListener("DOMContentLoaded", () => {
+    CodexUI.initCodexUI();
 });

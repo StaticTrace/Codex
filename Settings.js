@@ -17,17 +17,25 @@ function setupSettingsUI() {
     const closeBtn = document.getElementById("settings-close");
     const settingsButton = document.getElementById("settings-button");
 
-    if (!overlay || !panel || !closeBtn || !settingsButton) return;
+    if (!overlay || !panel || !closeBtn || !settingsButton) {
+        return;
+    }
 
     settingsButton.addEventListener("click", openSettings);
     closeBtn.addEventListener("click", closeSettings);
-    overlay.addEventListener("click", closeSettings);
+    overlay.addEventListener("click", event => {
+        if (event.target === overlay) {
+            closeSettings();
+        }
+    });
 
     document.querySelectorAll(".section-header").forEach(header => {
         header.addEventListener("click", () => {
             const body = header.nextElementSibling;
             const arrow = header.querySelector(".arrow");
-            if (!body || !arrow) return;
+            if (!body || !arrow) {
+                return;
+            }
             body.classList.toggle("hidden");
             arrow.classList.toggle("rotated");
         });
@@ -103,7 +111,9 @@ function setupSettingsUI() {
         importBtn.addEventListener("click", () => importInput.click());
         importInput.addEventListener("change", () => {
             const file = importInput.files[0];
-            if (!file) return;
+            if (!file) {
+                return;
+            }
             const reader = new FileReader();
             reader.onload = () => {
                 try {
@@ -123,7 +133,9 @@ function setupSettingsUI() {
 function openSettings() {
     const overlay = document.getElementById("settings-overlay");
     const panel = document.getElementById("settings-panel");
-    if (!overlay || !panel) return;
+    if (!overlay || !panel) {
+        return;
+    }
     overlay.classList.add("visible");
     panel.classList.add("visible");
 }
@@ -131,7 +143,9 @@ function openSettings() {
 function closeSettings() {
     const overlay = document.getElementById("settings-overlay");
     const panel = document.getElementById("settings-panel");
-    if (!overlay || !panel) return;
+    if (!overlay || !panel) {
+        return;
+    }
     overlay.classList.remove("visible");
     panel.classList.remove("visible");
 }
@@ -158,7 +172,9 @@ function applyTheme() {
     const radio = document.querySelector(
         `input[name='theme'][value='${Settings.theme}']`
     );
-    if (radio) radio.checked = true;
+    if (radio) {
+        radio.checked = true;
+    }
 }
 
 function resetTheme() {
@@ -177,7 +193,9 @@ function applyFontSize() {
     const radio = document.querySelector(
         `input[name='font-size'][value='${Settings.fontSize}']`
     );
-    if (radio) radio.checked = true;
+    if (radio) {
+        radio.checked = true;
+    }
 }
 
 function resetFont() {
@@ -243,6 +261,11 @@ function saveSettings() {
 function loadSettings() {
     const saved = localStorage.getItem("userSettings");
     if (saved) {
-        Object.assign(Settings, JSON.parse(saved));
+        try {
+            const parsed = JSON.parse(saved);
+            Object.assign(Settings, parsed);
+        } catch {
+            localStorage.removeItem("userSettings");
+        }
     }
 }
