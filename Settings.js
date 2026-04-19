@@ -1,10 +1,3 @@
-/* ============================================================
-   SETTINGS (Hybrid Style)
-   - Uses a Settings object for storage
-   - Uses simple helper functions for updates
-   - Matches the clean, procedural style of your Codex project
-============================================================ */
-
 const Settings = {
     theme: "auto",
     fontSize: "medium",
@@ -12,19 +5,12 @@ const Settings = {
     compactMode: false
 };
 
-/* ============================================================
-   INITIALIZATION
-   Called by Shared.js AFTER SettingsPanel.html is loaded
-============================================================ */
 function initSettings() {
     loadSettings();
     applySettings();
     setupSettingsUI();
 }
 
-/* ============================================================
-   SETUP UI EVENT LISTENERS
-============================================================ */
 function setupSettingsUI() {
     const overlay = document.getElementById("settings-overlay");
     const panel = document.getElementById("settings-panel");
@@ -33,28 +19,24 @@ function setupSettingsUI() {
 
     if (!overlay || !panel || !closeBtn || !settingsButton) return;
 
-    /* OPEN / CLOSE PANEL */
     settingsButton.addEventListener("click", openSettings);
     closeBtn.addEventListener("click", closeSettings);
     overlay.addEventListener("click", closeSettings);
 
-    /* COLLAPSIBLE SECTIONS */
     document.querySelectorAll(".section-header").forEach(header => {
         header.addEventListener("click", () => {
             const body = header.nextElementSibling;
             const arrow = header.querySelector(".arrow");
-
+            if (!body || !arrow) return;
             body.classList.toggle("hidden");
             arrow.classList.toggle("rotated");
         });
     });
 
-    /* SEARCH FILTER */
     const searchInput = document.getElementById("settings-search-input");
     if (searchInput) {
         searchInput.addEventListener("input", () => {
             const term = searchInput.value.toLowerCase();
-
             document.querySelectorAll(".settings-section").forEach(section => {
                 const text = section.innerText.toLowerCase();
                 section.style.display = text.includes(term) ? "" : "none";
@@ -62,21 +44,18 @@ function setupSettingsUI() {
         });
     }
 
-    /* THEME RADIO BUTTONS */
     document.querySelectorAll("input[name='theme']").forEach(radio => {
         radio.addEventListener("change", () => {
             setTheme(radio.value);
         });
     });
 
-    /* FONT SIZE RADIO BUTTONS */
     document.querySelectorAll("input[name='font-size']").forEach(radio => {
         radio.addEventListener("change", () => {
             setFontSize(radio.value);
         });
     });
 
-    /* ACCESSIBILITY TOGGLES */
     const highContrastToggle = document.getElementById("high-contrast-toggle");
     const compactModeToggle = document.getElementById("compact-mode-toggle");
 
@@ -92,26 +71,39 @@ function setupSettingsUI() {
         });
     }
 
-    /* RESET BUTTONS */
-    document.getElementById("reset-theme")?.addEventListener("click", resetTheme);
-    document.getElementById("reset-font")?.addEventListener("click", resetFont);
-    document.getElementById("reset-accessibility")?.addEventListener("click", resetAccessibility);
-    document.getElementById("reset-settings")?.addEventListener("click", resetAllSettings);
+    const resetThemeBtn = document.getElementById("reset-theme");
+    if (resetThemeBtn) {
+        resetThemeBtn.addEventListener("click", resetTheme);
+    }
 
-    /* ADVANCED: EXPORT SETTINGS */
-    document.getElementById("export-settings")?.addEventListener("click", exportSettings);
+    const resetFontBtn = document.getElementById("reset-font");
+    if (resetFontBtn) {
+        resetFontBtn.addEventListener("click", resetFont);
+    }
 
-    /* ADVANCED: IMPORT SETTINGS */
+    const resetAccessibilityBtn = document.getElementById("reset-accessibility");
+    if (resetAccessibilityBtn) {
+        resetAccessibilityBtn.addEventListener("click", resetAccessibility);
+    }
+
+    const resetAllBtn = document.getElementById("reset-settings");
+    if (resetAllBtn) {
+        resetAllBtn.addEventListener("click", resetAllSettings);
+    }
+
+    const exportBtn = document.getElementById("export-settings");
+    if (exportBtn) {
+        exportBtn.addEventListener("click", exportSettings);
+    }
+
     const importBtn = document.getElementById("import-settings");
     const importInput = document.getElementById("import-file-input");
 
     if (importBtn && importInput) {
         importBtn.addEventListener("click", () => importInput.click());
-
         importInput.addEventListener("change", () => {
             const file = importInput.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = () => {
                 try {
@@ -128,31 +120,28 @@ function setupSettingsUI() {
     }
 }
 
-/* ============================================================
-   OPEN / CLOSE PANEL
-============================================================ */
 function openSettings() {
-    document.getElementById("settings-overlay").classList.remove("hidden");
-    document.getElementById("settings-panel").classList.remove("hidden");
+    const overlay = document.getElementById("settings-overlay");
+    const panel = document.getElementById("settings-panel");
+    if (!overlay || !panel) return;
+    overlay.classList.add("visible");
+    panel.classList.add("visible");
 }
 
 function closeSettings() {
-    document.getElementById("settings-overlay").classList.add("hidden");
-    document.getElementById("settings-panel").classList.add("hidden");
+    const overlay = document.getElementById("settings-overlay");
+    const panel = document.getElementById("settings-panel");
+    if (!overlay || !panel) return;
+    overlay.classList.remove("visible");
+    panel.classList.remove("visible");
 }
 
-/* ============================================================
-   APPLY ALL SETTINGS
-============================================================ */
 function applySettings() {
     applyTheme();
     applyFontSize();
     applyAccessibility();
 }
 
-/* ============================================================
-   THEME
-============================================================ */
 function setTheme(value) {
     Settings.theme = value;
     saveSettings();
@@ -160,9 +149,15 @@ function setTheme(value) {
 }
 
 function applyTheme() {
-    document.body.dataset.theme = Settings.theme;
+    if (Settings.theme === "auto") {
+        document.body.removeAttribute("data-theme");
+    } else {
+        document.body.dataset.theme = Settings.theme;
+    }
 
-    const radio = document.querySelector(`input[name='theme'][value='${Settings.theme}']`);
+    const radio = document.querySelector(
+        `input[name='theme'][value='${Settings.theme}']`
+    );
     if (radio) radio.checked = true;
 }
 
@@ -170,9 +165,6 @@ function resetTheme() {
     setTheme("auto");
 }
 
-/* ============================================================
-   FONT SIZE
-============================================================ */
 function setFontSize(value) {
     Settings.fontSize = value;
     saveSettings();
@@ -182,7 +174,9 @@ function setFontSize(value) {
 function applyFontSize() {
     document.body.dataset.fontSize = Settings.fontSize;
 
-    const radio = document.querySelector(`input[name='font-size'][value='${Settings.fontSize}']`);
+    const radio = document.querySelector(
+        `input[name='font-size'][value='${Settings.fontSize}']`
+    );
     if (radio) radio.checked = true;
 }
 
@@ -190,9 +184,6 @@ function resetFont() {
     setFontSize("medium");
 }
 
-/* ============================================================
-   ACCESSIBILITY
-============================================================ */
 function setHighContrast(value) {
     Settings.highContrast = value;
     saveSettings();
@@ -206,11 +197,18 @@ function setCompactMode(value) {
 }
 
 function applyAccessibility() {
-    document.body.dataset.highContrast = Settings.highContrast;
-    document.body.dataset.compactMode = Settings.compactMode;
+    document.body.dataset.highContrast = String(Settings.highContrast);
+    document.body.dataset.compactMode = String(Settings.compactMode);
 
-    document.getElementById("high-contrast-toggle").checked = Settings.highContrast;
-    document.getElementById("compact-mode-toggle").checked = Settings.compactMode;
+    const highContrastToggle = document.getElementById("high-contrast-toggle");
+    const compactModeToggle = document.getElementById("compact-mode-toggle");
+
+    if (highContrastToggle) {
+        highContrastToggle.checked = Settings.highContrast;
+    }
+    if (compactModeToggle) {
+        compactModeToggle.checked = Settings.compactMode;
+    }
 }
 
 function resetAccessibility() {
@@ -218,38 +216,26 @@ function resetAccessibility() {
     setCompactMode(false);
 }
 
-/* ============================================================
-   RESET ALL
-============================================================ */
 function resetAllSettings() {
     Settings.theme = "auto";
     Settings.fontSize = "medium";
     Settings.highContrast = false;
     Settings.compactMode = false;
-
     saveSettings();
     applySettings();
 }
 
-/* ============================================================
-   IMPORT / EXPORT
-============================================================ */
 function exportSettings() {
     const data = JSON.stringify(Settings, null, 4);
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = "settings.json";
     a.click();
-
     URL.revokeObjectURL(url);
 }
 
-/* ============================================================
-   LOCAL STORAGE
-============================================================ */
 function saveSettings() {
     localStorage.setItem("userSettings", JSON.stringify(Settings));
 }

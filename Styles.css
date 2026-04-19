@@ -6,8 +6,8 @@
     --card-bg: #ffffff;
 }
 
-/* Themes */
-.dark-theme {
+/* Themes via data attributes */
+body[data-theme="dark"] {
     --bg-color: #1e1e1e;
     --text-color: #e0e0e0;
     --header-bg: #111;
@@ -15,7 +15,7 @@
     --card-bg: #2a2a2a;
 }
 
-.blue-theme {
+body[data-theme="blue"] {
     --bg-color: #e8ecf5;
     --text-color: #2a2f3a;
     --header-bg: #3b4a6b;
@@ -23,7 +23,7 @@
     --card-bg: #ffffff;
 }
 
-.solarized-theme {
+body[data-theme="solarized"] {
     --bg-color: #fdf6e3;
     --text-color: #586e75;
     --header-bg: #657b83;
@@ -31,7 +31,7 @@
     --card-bg: #eee8d5;
 }
 
-.pastel-theme {
+body[data-theme="pastel"] {
     --bg-color: #faf4ff;
     --text-color: #4a4a4a;
     --header-bg: #c7b8ea;
@@ -39,7 +39,7 @@
     --card-bg: #ffffff;
 }
 
-.high-contrast {
+body[data-high-contrast="true"] {
     --bg-color: #000000;
     --text-color: #ffffff;
     --header-bg: #000000;
@@ -56,9 +56,18 @@ body {
     transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-body.font-small { font-size: 14px; }
-body.font-medium { font-size: 16px; }
-body.font-large { font-size: 18px; }
+/* Font size via data attribute */
+body[data-font-size="small"] {
+    font-size: 14px;
+}
+
+body[data-font-size="medium"] {
+    font-size: 16px;
+}
+
+body[data-font-size="large"] {
+    font-size: 18px;
+}
 
 /* Header */
 header {
@@ -124,7 +133,7 @@ main {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0,0,0,0.45);
+    background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(2px);
     z-index: 900;
     opacity: 0;
@@ -216,7 +225,7 @@ main {
     transition: transform 0.2s ease;
 }
 
-.arrow.collapsed {
+.arrow.rotated {
     transform: rotate(-90deg);
 }
 
@@ -264,30 +273,31 @@ main {
     background-color: #666;
 }
 
-body.compact-mode .settings-panel {
+/* Compact mode via data attribute */
+body[data-compact-mode="true"] .settings-panel {
     width: 260px;
 }
 
-body.compact-mode .settings-content {
+body[data-compact-mode="true"] .settings-content {
     padding: 10px;
 }
 
-body.compact-mode .settings-section {
+body[data-compact-mode="true"] .settings-section {
     margin-bottom: 10px;
     padding-bottom: 6px;
 }
 
-body.compact-mode .section-header {
+body[data-compact-mode="true"] .section-header {
     font-size: 14px;
     padding: 4px 0;
 }
 
-body.compact-mode .section-body label {
+body[data-compact-mode="true"] .section-body label {
     margin-bottom: 4px;
 }
 
-body.compact-mode .advanced-button,
-body.compact-mode .section-reset {
+body[data-compact-mode="true"] .advanced-button,
+body[data-compact-mode="true"] .section-reset {
     padding: 6px;
     font-size: 13px;
 }
