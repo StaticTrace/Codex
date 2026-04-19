@@ -120,6 +120,17 @@
     document.addEventListener("DOMContentLoaded", () => {
         createNav();
         loadSettingsPanel();
+
+        // PWA Service Worker registration (enables offline caching + background sync)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('[Shared] Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('[Shared] Service Worker registration failed:', error);
+                });
+        }
     });
 
 })();
