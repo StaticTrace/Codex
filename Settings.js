@@ -129,31 +129,33 @@ function setupSettingsUI() {
         });
     }
 
-    document.addEventListener("keydown", e => {
-        if (e.key === "Escape") {
-            closeSettings();
-        }
-    });
-
-    const panelEl = document.getElementById("settings-panel");
-    if (panelEl) {
-        const focusableEls = panelEl.querySelectorAll("button, input, select, textarea, [tabindex]:not([tabindex='-1'])");
-        if (focusableEls.length > 0) {
-            const firstEl = focusableEls[0];
-            const lastEl = focusableEls[focusableEls.length - 1];
-            panelEl.addEventListener("keydown", e => {
-                if (e.key !== "Tab") return;
-                if (e.shiftKey) {
-                    if (document.activeElement === firstEl) {
-                        e.preventDefault();
-                        lastEl.focus();
-                    }
-                } else if (document.activeElement === lastEl) {
-                    e.preventDefault();
-                    firstEl.focus();
+    // LocalStorage Usage Detection + Clear functionality
+    const clearStorageBtn = document.getElementById("clear-storage-btn");
+    if (clearStorageBtn) {
+        clearStorageBtn.addEventListener("click", () => {
+            if (confirm("⚠️ This will permanently delete ALL data in LocalStorage (Codex entries, drafts, settings). Continue?")) {
+                try {
+                    localStorage.clear();
+                    updateStorageInfo();
+                    alert("LocalStorage has been cleared.");
+                    location.reload();
+                } catch (e) {
+                    console.error("Clear failed:", e);
+                    alert("Failed to clear storage.");
                 }
-            });
-        }
+            }
+        });
+    }
+
+    // Initial usage detection
+    updateStorageInfo();
+
+    // Refresh usage when Storage section is expanded
+    const storageSectionHeader = document.querySelector('[data-section="storage"] .section-header');
+    if (storageSectionHeader) {
+        storageSectionHeader.addEventListener("click", () => {
+            setTimeout(updateStorageInfo, 250);
+        });
     }
 }
 
@@ -294,5 +296,45 @@ function loadSettings() {
         } catch {
             localStorage.removeItem("userSettings");
         }
+    }
+}
+
+function getLocalStorageSize() {
+    let total = 0;
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const value = localStorage.getItem(key);
+            total += (key ? key.length : 0) + (value ? value.length : 0);
+        }
+        return total * 2; // UTF-16 bytes approximation
+    } catch (e) {
+        console.warn("localStorage usage detection failed:", e);
+        return 0;
+    }
+}
+
+function updateStorageInfo() {
+    const usedBytes = getLocalStorageSize();
+    const QUOTA_BYTES = 5242880; // 5 MB typical quota
+    const usedKB = Math.round(usedBytes / 1024);
+    const quotaMB = (QUOTA_BYTES / (1024 * 1024)).toFixed(1);
+    const percent = Math.min(100, Math.round((usedBytes / QUOTA_BYTES) * 100));
+
+    const progressBar = document.getElementById("storage-progress-bar");
+    const detailsEl = document.getElementById("storage-details");
+
+    if (progressBar) {
+        progressBar.style.width = `${percent}%`;
+        if (percent >= 80) {
+            progressBar.style.backgroundColor = "#e74c3c";
+        } else if (percent >= 50) {
+            progressBar.style.backgroundColor = "#f39c12";
+        } else {
+            progressBar.style.backgroundColor = "#2ecc71";
+        }
+    }
+    if (detailsEl) {
+        detailsEl.innerHTML = `<strong>${usedKB} KB</strong> of ${quotaMB} MB (${percent}%)`;
     }
 }
