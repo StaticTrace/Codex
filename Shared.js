@@ -1,7 +1,9 @@
 // Shared.js
-// Handles global navigation, settings panel loading, and accessibility.
+// Handles global navigation, settings panel loading, accessibility, PWA install prompt, and version badge.
 
 (function () {
+
+    const APP_VERSION = "v1.2";
 
     /* -----------------------------
        GLOBAL NAVIGATION
@@ -28,6 +30,67 @@
         addLink("Codex", "Codex.html");
 
         nav.appendChild(list);
+    }
+
+    function renderVersionBadge() {
+        const header = document.querySelector("header");
+        if (!header) return;
+
+        // Prevent duplicate badges
+        if (header.querySelector(".version-badge")) return;
+
+        const badge = document.createElement("span");
+        badge.className = "version-badge";
+        badge.textContent = APP_VERSION;
+        badge.setAttribute("title", `Codex ${APP_VERSION}`);
+
+        const settingsBtn = document.getElementById("settings-button");
+        if (settingsBtn) {
+            header.insertBefore(badge, settingsBtn);
+        } else {
+            header.appendChild(badge);
+        }
+    }
+
+    /* -----------------------------
+       PWA INSTALL PROMPT
+    ----------------------------- */
+    let deferredPrompt = null;
+
+    function showInstallPrompt() {
+        // Already dismissed permanently by user
+        if (window.StorageHelper.safeGetItem("installPromptDismissed") === "true") {
+            return;
+        }
+
+        const promptEl = document.createElement("div");
+        promptEl.className = "install-prompt show";
+        promptEl.innerHTML = `
+            <span>📲 Install Codex for a better offline experience</span>
+            <button id="install-app-btn">Install</button>
+            <button id="dismiss-install-btn" class="dismiss" aria-label="Dismiss install prompt">✕</button>
+        `;
+
+        document.body.appendChild(promptEl);
+
+        const installBtn = promptEl.querySelector("#install-app-btn");
+        const dismissBtn = promptEl.querySelector("#dismiss-install-btn");
+
+        installBtn.addEventListener("click", () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    console.log(`[PWA] Install prompt outcome: ${choiceResult.outcome}`);
+                    deferredPrompt = null;
+                });
+            }
+            promptEl.remove();
+        });
+
+        dismissBtn.addEventListener("click", () => {
+            promptEl.remove();
+            window.StorageHelper.safeSetItem("installPromptDismissed", "true");
+        });
     }
 
     /* -----------------------------
@@ -120,6 +183,7 @@
     document.addEventListener("DOMContentLoaded", () => {
         createNav();
         loadSettingsPanel();
+        renderVersionBadge();
 
         // PWA Service Worker registration (enables offline caching + background sync)
         if ('serviceWorker' in navigator) {
@@ -131,6 +195,18 @@
                     console.error('[Shared] Service Worker registration failed:', error);
                 });
         }
+
+        // PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('[PWA] beforeinstallprompt fired');
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPrompt();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] App installed successfully');
+        });
     });
 
 })();
