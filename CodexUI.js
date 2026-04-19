@@ -3,6 +3,7 @@
 
 (function () {
     const AUTOSAVE_KEY = "codexDraft";
+    const FILTERS_KEY = "codexFilters";
 
     const state = {
         entries: [],
@@ -27,7 +28,7 @@
 
     function safeLoadDraft() {
         try {
-            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            const raw = window.StorageHelper.safeGetItem(AUTOSAVE_KEY);
             if (!raw) return;
             const parsed = JSON.parse(raw);
             state.draft = {
@@ -43,7 +44,7 @@
 
     function safeSaveDraft() {
         try {
-            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state.draft));
+            window.StorageHelper.safeSetItem(AUTOSAVE_KEY, JSON.stringify(state.draft));
         } catch (e) {
             console.warn("Failed to save draft:", e);
         }
@@ -52,9 +53,38 @@
     function clearDraft() {
         state.draft = { title: "", category: "", tags: "", content: "" };
         try {
-            localStorage.removeItem(AUTOSAVE_KEY);
+            window.StorageHelper.safeRemoveItem(AUTOSAVE_KEY);
         } catch (e) {
             console.warn("Failed to clear draft:", e);
+        }
+    }
+
+    /* -----------------------------
+       PERSIST FILTERS (user-specific)
+    ----------------------------- */
+
+    function loadFilters() {
+        const raw = window.StorageHelper.safeGetItem(FILTERS_KEY);
+        if (!raw) return;
+        try {
+            const parsed = JSON.parse(raw);
+            state.filters.search = parsed.search || "";
+            state.filters.tag = parsed.tag || "";
+            state.filters.category = parsed.category || "";
+            state.filters.favoritesOnly = Boolean(parsed.favoritesOnly);
+            if (parsed.sort && ["titleAsc", "createdAtDesc", "updatedAtDesc", "favoriteDesc"].includes(parsed.sort)) {
+                state.filters.sort = parsed.sort;
+            }
+        } catch (e) {
+            console.warn("Failed to load filters:", e);
+        }
+    }
+
+    function saveFilters() {
+        try {
+            window.StorageHelper.safeSetItem(FILTERS_KEY, JSON.stringify(state.filters));
+        } catch (e) {
+            console.warn("Failed to save filters:", e);
         }
     }
 
@@ -173,6 +203,7 @@
         searchInput.setAttribute("aria-label", "Search entries");
         searchInput.addEventListener("input", () => {
             state.filters.search = searchInput.value;
+            saveFilters();
             renderList();
         });
 
@@ -192,6 +223,7 @@
         tagSelect.setAttribute("aria-label", "Filter by tag");
         tagSelect.addEventListener("change", () => {
             state.filters.tag = tagSelect.value;
+            saveFilters();
             renderList();
         });
 
@@ -211,6 +243,7 @@
         categorySelect.setAttribute("aria-label", "Filter by category");
         categorySelect.addEventListener("change", () => {
             state.filters.category = categorySelect.value;
+            saveFilters();
             renderList();
         });
 
@@ -221,6 +254,7 @@
         favCheckbox.checked = state.filters.favoritesOnly;
         favCheckbox.addEventListener("change", () => {
             state.filters.favoritesOnly = favCheckbox.checked;
+            saveFilters();
             renderList();
         });
         const favSpan = document.createElement("span");
@@ -245,6 +279,7 @@
         sortSelect.value = state.filters.sort;
         sortSelect.addEventListener("change", () => {
             state.filters.sort = sortSelect.value;
+            saveFilters();
             renderList();
         });
 
@@ -517,6 +552,7 @@
     function initCodexUI() {
         state.entries = window.CodexStorage.loadEntries();
         safeLoadDraft();
+        loadFilters();
 
         renderFilters();
         renderTools();
