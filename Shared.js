@@ -53,6 +53,29 @@
     }
 
     /* -----------------------------
+       DYNAMIC SETTINGS PANEL LOAD (GitHub Pages optimization - eliminates duplication)
+    ----------------------------- */
+    async function loadSettingsPanel() {
+        const container = document.getElementById("global-settings");
+        if (!container) return;
+
+        // Only load if empty (prevents re-fetch)
+        if (container.innerHTML.trim().length > 10) return;
+
+        try {
+            const response = await fetch("SettingsPanel.html");
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const html = await response.text();
+            container.innerHTML = html;
+            console.log("[Shared] Settings panel loaded dynamically from SettingsPanel.html");
+        } catch (err) {
+            console.error("[Shared] Failed to load SettingsPanel.html:", err);
+        }
+    }
+
+    /* -----------------------------
        PWA INSTALL PROMPT
     ----------------------------- */
     let deferredPrompt = null;
@@ -145,9 +168,11 @@
     /* -----------------------------
        INITIALIZATION
     ----------------------------- */
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
         createNav();
         renderVersionBadge();
+
+        await loadSettingsPanel();
 
         if (typeof window.initSettings === "function") {
             window.initSettings();
