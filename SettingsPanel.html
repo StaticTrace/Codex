@@ -17,13 +17,42 @@
                 <span class="arrow">▼</span>
             </div>
             <div class="section-body hidden">
-                <label><input type="radio" name="theme" value="auto" checked> Auto (Match System)</label>
-                <label><input type="radio" name="theme" value="light"> Light</label>
-                <label><input type="radio" name="theme" value="dark"> Dark</label>
-                <label><input type="radio" name="theme" value="blue"> Slate Blue</label>
-                <label><input type="radio" name="theme" value="solarized"> Solarized</label>
-                <label><input type="radio" name="theme" value="pastel"> Pastel</label>
-                <label>Custom Accent Color <input type="color" id="custom-accent-picker" value="#58a6ff"></label>
+                <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:120px;">
+                        <input type="radio" name="theme" value="auto" checked>
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:6px; background:linear-gradient(90deg, #f4f4f4 50%, #1e1e1e 50%); border:2px solid #ccc; flex-shrink:0;"></span>
+                        Auto (Match System)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:120px;">
+                        <input type="radio" name="theme" value="light">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:6px; background:#f4f4f4; border:2px solid #ccc; flex-shrink:0;"></span>
+                        Light
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:120px;">
+                        <input type="radio" name="theme" value="dark">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:6px; background:#1e1e1e; border:2px solid #ccc; flex-shrink:0;"></span>
+                        Dark
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:120px;">
+                        <input type="radio" name="theme" value="blue">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:6px; background:#e8ecf5; border:2px solid #ccc; flex-shrink:0;"></span>
+                        Slate Blue
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:120px;">
+                        <input type="radio" name="theme" value="solarized">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:6px; background:#fdf6e3; border:2px solid #ccc; flex-shrink:0;"></span>
+                        Solarized
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:120px;">
+                        <input type="radio" name="theme" value="pastel">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:6px; background:#faf4ff; border:2px solid #ccc; flex-shrink:0;"></span>
+                        Pastel
+                    </label>
+                </div>
+                <label style="display:flex; align-items:center; gap:8px; margin-top:16px;">
+                    Custom Accent Color
+                    <input type="color" id="custom-accent-picker" value="#58a6ff" style="width:48px; height:32px; padding:2px; border:none; border-radius:6px; cursor:pointer;">
+                </label>
                 <button class="section-reset" id="reset-theme">Reset Theme</button>
             </div>
         </div>
