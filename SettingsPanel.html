@@ -63,6 +63,24 @@
                 <input type="file" id="import-file-input" accept=".json" hidden>
             </div>
         </div>
+
+        <div class="settings-section" data-section="storage">
+            <div class="section-header" tabindex="0">
+                <span>Storage</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="section-body hidden">
+                <div id="storage-info-container">
+                    <p><strong>LocalStorage Usage</strong></p>
+                    <div class="progress-container">
+                        <div id="storage-progress-bar" class="progress-bar"></div>
+                    </div>
+                    <p id="storage-details" class="storage-details">Calculating...</p>
+                </div>
+                <button id="clear-storage-btn" class="advanced-button danger">Clear All LocalStorage Data</button>
+                <p class="storage-warning">⚠️ This will delete ALL Codex data, drafts, and settings permanently. The page will reload after clearing.</p>
+            </div>
+        </div>
     </div>
 
     <button id="reset-settings" class="reset-button">Reset All</button>
