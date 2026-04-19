@@ -1,9 +1,10 @@
 // CodexStorage.js
-// Handles persistent storage of Codex entries using IndexedDB with localStorage migration.
+// Handles persistent storage of Codex entries using IndexedDB with localStorage migration + offline sync queue.
 
 (function () {
     const DB_NAME = "CodexDB";
-    const STORE_NAME = "entries";
+    const ENTRIES_STORE = "entries";
+    const QUEUE_STORE = "syncQueue";
     const STORAGE_KEY = "codexEntries"; // legacy localStorage key (for migration only)
     const SCHEMA_VERSION = 2;
 
@@ -41,11 +42,14 @@
     function getDB() {
         if (db) return Promise.resolve(db);
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, 1);
+            const request = indexedDB.open(DB_NAME, 2);
             request.onupgradeneeded = (e) => {
                 const dbInstance = e.target.result;
-                if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
-                    dbInstance.createObjectStore(STORE_NAME, { keyPath: "id" });
+                if (!dbInstance.objectStoreNames.contains(ENTRIES_STORE)) {
+                    dbInstance.createObjectStore(ENTRIES_STORE, { keyPath: "id" });
+                }
+                if (!dbInstance.objectStoreNames.contains(QUEUE_STORE)) {
+                    dbInstance.createObjectStore(QUEUE_STORE, { keyPath: "id" });
                 }
             };
             request.onsuccess = (e) => {
@@ -73,8 +77,8 @@
     async function loadEntries() {
         const dbInstance = await getDB();
         return new Promise((resolve, reject) => {
-            const transaction = dbInstance.transaction(STORE_NAME, "readonly");
-            const store = transaction.objectStore(STORE_NAME);
+            const transaction = dbInstance.transaction(ENTRIES_STORE, "readonly");
+            const store = transaction.objectStore(ENTRIES_STORE);
             const request = store.getAll();
             request.onsuccess = async () => {
                 let entries = request.result || [];
@@ -98,8 +102,8 @@
         memoryStore = normalized.slice();
         const dbInstance = await getDB();
         return new Promise((resolve, reject) => {
-            const transaction = dbInstance.transaction(STORE_NAME, "readwrite");
-            const store = transaction.objectStore(STORE_NAME);
+            const transaction = dbInstance.transaction(ENTRIES_STORE, "readwrite");
+            const store = transaction.objectStore(ENTRIES_STORE);
             const clearRequest = store.clear();
             clearRequest.onsuccess = () => {
                 let index = 0;
@@ -118,6 +122,46 @@
                 putNext();
             };
             clearRequest.onerror = () => reject(clearRequest.error);
+        });
+    }
+
+    // === OFFLINE SYNC QUEUE ===
+    async function addToSyncQueue(operation) {
+        const dbInstance = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = dbInstance.transaction(QUEUE_STORE, "readwrite");
+            const store = tx.objectStore(QUEUE_STORE);
+            const op = {
+                id: generateId(),
+                type: operation.type, // 'create' | 'update' | 'delete' | 'favorite'
+                payload: operation.payload,
+                timestamp: Date.now()
+            };
+            const req = store.put(op);
+            req.onsuccess = () => resolve(op.id);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function processSyncQueue() {
+        const dbInstance = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = dbInstance.transaction(QUEUE_STORE, "readwrite");
+            const store = tx.objectStore(QUEUE_STORE);
+            const getAllReq = store.getAll();
+            getAllReq.onsuccess = async () => {
+                const queue = getAllReq.result;
+                if (queue.length === 0) {
+                    resolve([]);
+                    return;
+                }
+                // For local-only Codex: no server → just clear queue (demo of sync completion)
+                // In a real app with backend: send each op to server here
+                console.log(`[CodexStorage] Processing ${queue.length} queued operations (local-only demo)`);
+                await store.clear();
+                resolve(queue);
+            };
+            getAllReq.onerror = () => reject(getAllReq.error);
         });
     }
 
@@ -169,6 +213,8 @@
         loadEntries,
         saveEntries,
         exportEntries,
-        importEntriesFromFile
+        importEntriesFromFile,
+        addToSyncQueue,
+        processSyncQueue
     };
 })();

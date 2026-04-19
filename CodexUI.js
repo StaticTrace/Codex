@@ -1,5 +1,5 @@
 // CodexUI.js
-// Handles Codex UI: listing, filters, editing, autosave, markdown, highlighting.
+// Handles Codex UI: listing, filters, editing, autosave, markdown, highlighting + PWA offline sync strategies.
 
 (function () {
     const AUTOSAVE_KEY = "codexDraft";
@@ -20,7 +20,8 @@
             tags: "",
             content: ""
         },
-        editingId: null
+        editingId: null,
+        isOffline: !navigator.onLine
     };
 
     /* -----------------------------
@@ -185,6 +186,50 @@
             if (e.category) set.add(e.category);
         });
         return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }
+
+    /* -----------------------------
+       OFFLINE BANNER + SYNC STRATEGY
+    ----------------------------- */
+
+    function renderOfflineBanner() {
+        let banner = document.getElementById("offline-banner");
+        if (!banner) {
+            banner = document.createElement("div");
+            banner.id = "offline-banner";
+            banner.className = "offline-banner";
+            banner.innerHTML = `
+                <span>📴 Offline — All changes saved locally</span>
+                <span style="margin-left:8px;font-size:0.9em;">(Background sync will run when online)</span>
+            `;
+            document.body.appendChild(banner);
+        }
+        if (state.isOffline) {
+            banner.classList.add("show");
+        } else {
+            banner.classList.remove("show");
+        }
+    }
+
+    async function registerBackgroundSync() {
+        if ("serviceWorker" in navigator && "SyncManager" in window) {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.sync.register("sync-entries");
+                console.log("[CodexUI] Background Sync registered");
+            } catch (err) {
+                console.warn("[CodexUI] Background Sync registration failed (fallback to online event):", err);
+            }
+        }
+    }
+
+    async function queueOperation(type, payload) {
+        try {
+            await window.CodexStorage.addToSyncQueue({ type, payload });
+            await registerBackgroundSync();
+        } catch (e) {
+            console.error("Failed to queue operation:", e);
+        }
     }
 
     /* -----------------------------
@@ -426,6 +471,11 @@
             state.entries.push(entry);
             await window.CodexStorage.saveEntries(state.entries);
 
+            // PWA Offline Sync Strategy: queue if offline
+            if (state.isOffline) {
+                await queueOperation("create", entry);
+            }
+
             titleInput.value = "";
             categoryInput.value = "";
             tagsInput.value = "";
@@ -524,6 +574,11 @@
                 entry.favorite = !entry.favorite;
                 entry.updatedAt = new Date().toISOString();
                 await window.CodexStorage.saveEntries(state.entries);
+
+                if (state.isOffline) {
+                    await queueOperation("favorite", { id: entry.id, favorite: entry.favorite });
+                }
+
                 renderList();
             });
             header.appendChild(favoriteButton);
@@ -604,6 +659,11 @@
                     entry.updatedAt = new Date().toISOString();
 
                     await window.CodexStorage.saveEntries(state.entries);
+
+                    if (state.isOffline) {
+                        await queueOperation("update", entry);
+                    }
+
                     state.editingId = null;
                     renderList();
                 });
@@ -623,6 +683,11 @@
                     if (!confirm("Delete this entry?")) return;
                     state.entries = state.entries.filter(e => e.id !== entry.id);
                     await window.CodexStorage.saveEntries(state.entries);
+
+                    if (state.isOffline) {
+                        await queueOperation("delete", { id: entry.id });
+                    }
+
                     state.editingId = null;
                     renderList();
                 });
@@ -666,6 +731,11 @@
                     if (!confirm("Delete this entry?")) return;
                     state.entries = state.entries.filter(e => e.id !== entry.id);
                     await window.CodexStorage.saveEntries(state.entries);
+
+                    if (state.isOffline) {
+                        await queueOperation("delete", { id: entry.id });
+                    }
+
                     renderFilters();
                     renderList();
                 });
@@ -686,7 +756,7 @@
     }
 
     /* -----------------------------
-       INITIALIZATION
+       INITIALIZATION + OFFLINE SYNC
     ----------------------------- */
 
     async function initCodexUI() {
@@ -703,6 +773,30 @@
         renderTools();
         renderNewForm();
         renderList();
+        renderOfflineBanner();
+
+        // PWA Offline Sync: network status listeners
+        window.addEventListener("online", async () => {
+            state.isOffline = false;
+            renderOfflineBanner();
+            // Process any queued operations (demo)
+            await window.CodexStorage.processSyncQueue();
+            // Refresh list in case of background changes
+            state.entries = await window.CodexStorage.loadEntries();
+            renderList();
+        });
+
+        window.addEventListener("offline", () => {
+            state.isOffline = true;
+            renderOfflineBanner();
+        });
+
+        // Initial sync queue processing if already online
+        if (!state.isOffline) {
+            await window.CodexStorage.processSyncQueue();
+        }
+
+        console.log("[CodexUI] PWA offline sync strategies initialized (IndexedDB queue + Background Sync)");
     }
 
     document.addEventListener("DOMContentLoaded", initCodexUI);
