@@ -94,16 +94,6 @@
     }
 
     /* -----------------------------
-       SAFE FETCH (OFFLINE-FRIENDLY)
-    ----------------------------- */
-    function safeFetch(url) {
-        return fetch(url).catch(() => {
-            console.warn("Offline: could not load", url);
-            return Promise.resolve({ ok: false, text: () => "" });
-        });
-    }
-
-    /* -----------------------------
        CENTRALIZED LOCALSTORAGE HELPER
     ----------------------------- */
     window.StorageHelper = {
@@ -153,37 +143,15 @@
     };
 
     /* -----------------------------
-       SETTINGS PANEL LOADING
-    ----------------------------- */
-    function loadSettingsPanel() {
-        const panelContainer = document.getElementById("global-settings");
-        if (!panelContainer) return;
-
-        safeFetch("SettingsPanel.html")
-            .then(response => {
-                if (!response.ok) throw new Error("Failed to load settings panel");
-                return response.text();
-            })
-            .then(html => {
-                panelContainer.innerHTML = html;
-
-                // Initialize settings logic if available
-                if (typeof window.initSettings === "function") {
-                    window.initSettings();
-                }
-            })
-            .catch(err => {
-                console.error("Error loading settings panel:", err);
-            });
-    }
-
-    /* -----------------------------
        INITIALIZATION
     ----------------------------- */
     document.addEventListener("DOMContentLoaded", () => {
         createNav();
-        loadSettingsPanel();
         renderVersionBadge();
+
+        if (typeof window.initSettings === "function") {
+            window.initSettings();
+        }
 
         // PWA Service Worker registration (enables offline caching + background sync)
         if ('serviceWorker' in navigator) {

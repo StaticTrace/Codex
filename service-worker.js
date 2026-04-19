@@ -5,7 +5,6 @@ const CORE_ASSETS = [
   "/index.html",
   "/Home.html",
   "/Codex.html",
-  "/SettingsPanel.html",
   "/manifest.json",
 
   // Styles
