@@ -693,6 +693,97 @@ body[data-compact-mode="true"] .section-reset {
     color: #666;
 }
 
+/* NEW: Command Palette */
+.command-palette {
+    position: fixed;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    max-width: 620px;
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow-hover);
+    z-index: 11000;
+    padding: 16px;
+    max-height: 70vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.command-palette-input {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 1.1rem;
+    border: none;
+    outline: none;
+    background: transparent;
+    border-bottom: 1px solid #ccc;
+}
+
+.command-palette-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.command-palette-item {
+    padding: 12px 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.command-palette-item:hover,
+.command-palette-item.active {
+    background: rgba(88, 166, 255, 0.15);
+}
+
+/* NEW: Internal wiki links */
+.internal-link {
+    color: var(--accent-color);
+    text-decoration: underline dashed;
+    cursor: pointer;
+}
+
+/* NEW: Markdown toolbar */
+.markdown-toolbar {
+    display: flex;
+    gap: 4px;
+    padding: 6px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.markdown-toolbar button {
+    padding: 6px 10px;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.markdown-toolbar button:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+/* NEW: Archived cards */
+.codex-card.archived {
+    opacity: 0.75;
+    border-top-color: #95a5a6;
+}
+
+/* NEW: Pinned indicator */
+.codex-card.pinned {
+    border-top-color: #f1c40f;
+}
+
 /* Search highlighting */
 mark {
     background-color: #fff59d;

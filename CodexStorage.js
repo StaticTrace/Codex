@@ -27,6 +27,8 @@
             tags: Array.isArray(entry.tags) ? entry.tags : [],
             content: (entry.content || "").toString(),
             favorite: Boolean(entry.favorite),
+            archived: Boolean(entry.archived),
+            pinned: Boolean(entry.pinned),
             createdAt: entry.createdAt || now,
             updatedAt: entry.updatedAt || now,
             schemaVersion: SCHEMA_VERSION
@@ -133,7 +135,7 @@
             const store = tx.objectStore(QUEUE_STORE);
             const op = {
                 id: generateId(),
-                type: operation.type, // 'create' | 'update' | 'delete' | 'favorite'
+                type: operation.type, // 'create' | 'update' | 'delete' | 'favorite' | 'archive'
                 payload: operation.payload,
                 timestamp: Date.now()
             };

@@ -2,7 +2,8 @@ const Settings = {
     theme: "auto",
     fontSize: "medium",
     highContrast: false,
-    compactMode: false
+    compactMode: false,
+    customAccent: "#58a6ff"
 };
 
 function initSettings() {
@@ -76,6 +77,13 @@ function setupSettingsUI() {
     if (compactModeToggle) {
         compactModeToggle.addEventListener("change", () => {
             setCompactMode(compactModeToggle.checked);
+        });
+    }
+
+    const customAccentPicker = document.getElementById("custom-accent-picker");
+    if (customAccentPicker) {
+        customAccentPicker.addEventListener("input", () => {
+            setCustomAccent(customAccentPicker.value);
         });
     }
 
@@ -190,6 +198,7 @@ function applySettings() {
     applyTheme();
     applyFontSize();
     applyAccessibility();
+    applyCustomAccent();
 }
 
 function setTheme(value) {
@@ -250,6 +259,16 @@ function setCompactMode(value) {
     applyAccessibility();
 }
 
+function setCustomAccent(value) {
+    Settings.customAccent = value;
+    saveSettings();
+    applyCustomAccent();
+}
+
+function applyCustomAccent() {
+    document.documentElement.style.setProperty('--accent-color', Settings.customAccent);
+}
+
 function applyAccessibility() {
     document.body.dataset.highContrast = String(Settings.highContrast);
     document.body.dataset.compactMode = String(Settings.compactMode);
@@ -275,6 +294,7 @@ function resetAllSettings() {
     Settings.fontSize = "medium";
     Settings.highContrast = false;
     Settings.compactMode = false;
+    Settings.customAccent = "#58a6ff";
     saveSettings();
     applySettings();
 }

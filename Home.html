@@ -13,9 +13,11 @@
     <link rel="preload" as="style" href="Styles.css">
     <link rel="preload" as="script" href="Shared.js">
     <link rel="preload" as="script" href="Settings.js">
+    <link rel="preload" as="script" href="CodexStorage.js">
 
     <script src="Shared.js" defer></script>
     <script src="Settings.js" defer></script>
+    <script src="CodexStorage.js" defer></script>
 </head>
 <body>
     <header>
@@ -35,6 +37,56 @@
             <p>The Codex is your structured knowledge base with Markdown support, filters, and export/import tools.</p>
             <p><a href="Codex.html">Open Codex</a></p>
         </section>
+
+        <!-- NEW: Analytics Dashboard -->
+        <section id="analytics-dashboard" style="margin-top:40px;">
+            <h3>Knowledge Base Stats</h3>
+            <div id="stats-content" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;"></div>
+        </section>
     </main>
+
+    <script>
+        // Simple stats loader (runs on Home page)
+        async function loadHomeAnalytics() {
+            if (!window.CodexStorage) return;
+            try {
+                const entries = await window.CodexStorage.loadEntries();
+                const total = entries.length;
+                const archived = entries.filter(e => e.archived).length;
+                const pinned = entries.filter(e => e.pinned).length;
+                const uniqueTags = new Set(entries.flatMap(e => e.tags)).size;
+
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                const thisWeek = entries.filter(e => new Date(e.updatedAt) > weekAgo).length;
+
+                const container = document.getElementById("stats-content");
+                container.innerHTML = `
+                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
+                        <strong>Total Entries</strong><br><span style="font-size:2.5rem;">${total}</span>
+                    </div>
+                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
+                        <strong>Pinned</strong><br><span style="font-size:2.5rem;">${pinned}</span>
+                    </div>
+                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
+                        <strong>Archived</strong><br><span style="font-size:2.5rem;">${archived}</span>
+                    </div>
+                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
+                        <strong>Unique Tags</strong><br><span style="font-size:2.5rem;">${uniqueTags}</span>
+                    </div>
+                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
+                        <strong>Updated this week</strong><br><span style="font-size:2.5rem;">${thisWeek}</span>
+                    </div>
+                `;
+            } catch (e) {
+                console.warn("Analytics load failed", e);
+            }
+        }
+
+        // Run after storage is ready
+        window.addEventListener("load", () => {
+            setTimeout(loadHomeAnalytics, 800);
+        });
+    </script>
 </body>
 </html>
