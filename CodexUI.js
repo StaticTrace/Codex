@@ -4,7 +4,9 @@ const CodexUI = (function () {
         filters: {
             searchTerm: "",
             tag: "",
-            favoritesOnly: false
+            category: "",
+            favoritesOnly: false,
+            sort: "updatedAtDesc"
         }
     };
 
@@ -27,135 +29,37 @@ const CodexUI = (function () {
         refs.toolsContainer = document.getElementById("codex-tools");
         refs.newContainer = document.getElementById("codex-new");
         refs.listContainer = document.getElementById("codex-list");
-        refs.importInput = document.getElementById("codex-import-input");
 
         state.entries = loadEntries();
-        renderAll();
-        bindStaticEvents();
-    }
-
-    function bindStaticEvents() {
-        if (refs.filtersContainer) {
-            const searchInput = refs.filtersContainer.querySelector("#codex-search-input");
-            const tagSelect = refs.filtersContainer.querySelector("#codex-tag-select");
-            const favoriteCheckbox = refs.filtersContainer.querySelector("#codex-favorite-only");
-
-            if (searchInput) {
-                searchInput.addEventListener("input", () => {
-                    state.filters.searchTerm = searchInput.value;
-                    renderList();
-                });
-            }
-
-            if (tagSelect) {
-                tagSelect.addEventListener("change", () => {
-                    state.filters.tag = tagSelect.value;
-                    renderList();
-                });
-            }
-
-            if (favoriteCheckbox) {
-                favoriteCheckbox.addEventListener("change", () => {
-                    state.filters.favoritesOnly = favoriteCheckbox.checked;
-                    renderList();
-                });
-            }
-        }
-
-        if (refs.toolsContainer) {
-            const exportButton = refs.toolsContainer.querySelector("#codex-export-button");
-            const importButton = refs.toolsContainer.querySelector("#codex-import-button");
-
-            if (exportButton) {
-                exportButton.addEventListener("click", () => {
-                    exportEntries();
-                });
-            }
-
-            if (importButton && refs.importInput) {
-                importButton.addEventListener("click", () => {
-                    refs.importInput.click();
-                });
-
-                refs.importInput.addEventListener("change", () => {
-                    const file = refs.importInput.files[0];
-                    if (!file) {
-                        return;
-                    }
-                    importEntriesFromFile(file, { merge: true })
-                        .then(entries => {
-                            state.entries = entries;
-                            refs.importInput.value = "";
-                            renderAll();
-                        })
-                        .catch(() => {
-                            alert("Invalid Codex entries file.");
-                            refs.importInput.value = "";
-                        });
-                });
-            }
-        }
-
-        if (refs.newContainer) {
-            const form = refs.newContainer.querySelector("#codex-new-form");
-            if (form) {
-                form.addEventListener("submit", event => {
-                    event.preventDefault();
-                    const titleInput = form.querySelector("#codex-new-title");
-                    const descriptionInput = form.querySelector("#codex-new-description");
-                    const notesInput = form.querySelector("#codex-new-notes");
-                    const tagsInput = form.querySelector("#codex-new-tags");
-
-                    const title = titleInput ? titleInput.value.trim() : "";
-                    const description = descriptionInput ? descriptionInput.value.trim() : "";
-                    const notes = notesInput ? notesInput.value.trim() : "";
-                    const tagsRaw = tagsInput ? tagsInput.value : "";
-                    const tags = tagsRaw
-                        .split(",")
-                        .map(t => t.trim())
-                        .filter(t => t.length > 0);
-
-                    const entry = validateEntry({
-                        id: crypto.randomUUID(),
-                        title,
-                        description,
-                        notes,
-                        favorite: false,
-                        tags
-                    });
-
-                    state.entries.push(entry);
-                    state.entries = saveEntries(state.entries);
-                    form.reset();
-                    renderAll();
-                });
-            }
-        }
 
         if (refs.listContainer) {
-            refs.listContainer.addEventListener("click", event => {
-                const target = event.target;
-                if (!(target instanceof HTMLElement)) {
-                    return;
-                }
+            refs.listContainer.addEventListener("click", handleListClick);
+        }
 
-                const card = target.closest(".codex-card");
-                if (!card) {
-                    return;
-                }
-                const id = card.getAttribute("data-entry-id");
-                if (!id) {
-                    return;
-                }
+        renderAll();
+    }
 
-                if (target.classList.contains("codex-favorite-button")) {
-                    toggleFavorite(id);
-                } else if (target.classList.contains("codex-save-button")) {
-                    saveCardEdits(card, id);
-                } else if (target.classList.contains("codex-delete-button")) {
-                    deleteEntry(id);
-                }
-            });
+    function handleListClick(event) {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+            return;
+        }
+
+        const card = target.closest(".codex-card");
+        if (!card) {
+            return;
+        }
+        const id = card.getAttribute("data-entry-id");
+        if (!id) {
+            return;
+        }
+
+        if (target.classList.contains("codex-favorite-button")) {
+            toggleFavorite(id);
+        } else if (target.classList.contains("codex-save-button")) {
+            saveCardEdits(card, id);
+        } else if (target.classList.contains("codex-delete-button")) {
+            deleteEntry(id);
         }
     }
 
@@ -165,6 +69,7 @@ const CodexUI = (function () {
             return;
         }
         entry.favorite = !entry.favorite;
+        entry.updatedAt = new Date().toISOString();
         state.entries = saveEntries(state.entries);
         renderList();
     }
@@ -179,6 +84,7 @@ const CodexUI = (function () {
         const descriptionInput = card.querySelector(".codex-card-input[data-field='description']");
         const notesInput = card.querySelector(".codex-card-textarea[data-field='notes']");
         const tagsInput = card.querySelector(".codex-card-input[data-field='tags']");
+        const categoryInput = card.querySelector(".codex-card-input[data-field='category']");
 
         entry.title = titleInput ? titleInput.value : entry.title;
         entry.description = descriptionInput ? descriptionInput.value : entry.description;
@@ -191,6 +97,11 @@ const CodexUI = (function () {
                 .filter(t => t.length > 0);
         }
 
+        if (categoryInput) {
+            entry.category = categoryInput.value.trim();
+        }
+
+        entry.updatedAt = new Date().toISOString();
         state.entries = saveEntries(state.entries);
         renderAll();
     }
@@ -217,7 +128,10 @@ const CodexUI = (function () {
         }
 
         const tags = getAllTags(state.entries);
+        const categories = getAllCategories(state.entries);
         const selectedTag = state.filters.tag;
+        const selectedCategory = state.filters.category;
+        const sort = state.filters.sort;
 
         refs.filtersContainer.innerHTML = `
             <input
@@ -242,6 +156,38 @@ const CodexUI = (function () {
                     )
                     .join("")}
             </select>
+            <select
+                id="codex-category-select"
+                class="codex-filter-select"
+                aria-label="Filter by category"
+            >
+                <option value="">All categories</option>
+                ${categories
+                    .map(
+                        category => `<option value="${category.replace(/"/g, "&quot;")}" ${
+                            category === selectedCategory ? "selected" : ""
+                        }>${category}</option>`
+                    )
+                    .join("")}
+            </select>
+            <select
+                id="codex-sort-select"
+                class="codex-filter-select"
+                aria-label="Sort entries"
+            >
+                <option value="updatedAtDesc" ${sort === "updatedAtDesc" ? "selected" : ""}>
+                    Recently updated
+                </option>
+                <option value="createdAtDesc" ${sort === "createdAtDesc" ? "selected" : ""}>
+                    Recently created
+                </option>
+                <option value="titleAsc" ${sort === "titleAsc" ? "selected" : ""}>
+                    Title A→Z
+                </option>
+                <option value="favoriteDesc" ${sort === "favoriteDesc" ? "selected" : ""}>
+                    Favorites first
+                </option>
+            </select>
             <label class="codex-filter-favorite">
                 <input
                     id="codex-favorite-only"
@@ -251,6 +197,47 @@ const CodexUI = (function () {
                 Favorites only
             </label>
         `;
+
+        const searchInput = refs.filtersContainer.querySelector("#codex-search-input");
+        const tagSelect = refs.filtersContainer.querySelector("#codex-tag-select");
+        const categorySelect = refs.filtersContainer.querySelector("#codex-category-select");
+        const sortSelect = refs.filtersContainer.querySelector("#codex-sort-select");
+        const favoriteCheckbox = refs.filtersContainer.querySelector("#codex-favorite-only");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", () => {
+                state.filters.searchTerm = searchInput.value;
+                renderList();
+            });
+        }
+
+        if (tagSelect) {
+            tagSelect.addEventListener("change", () => {
+                state.filters.tag = tagSelect.value;
+                renderList();
+            });
+        }
+
+        if (categorySelect) {
+            categorySelect.addEventListener("change", () => {
+                state.filters.category = categorySelect.value;
+                renderList();
+            });
+        }
+
+        if (sortSelect) {
+            sortSelect.addEventListener("change", () => {
+                state.filters.sort = sortSelect.value;
+                renderList();
+            });
+        }
+
+        if (favoriteCheckbox) {
+            favoriteCheckbox.addEventListener("change", () => {
+                state.filters.favoritesOnly = favoriteCheckbox.checked;
+                renderList();
+            });
+        }
     }
 
     function renderTools() {
@@ -281,7 +268,38 @@ const CodexUI = (function () {
             >
         `;
 
+        const exportButton = refs.toolsContainer.querySelector("#codex-export-button");
+        const importButton = refs.toolsContainer.querySelector("#codex-import-button");
         refs.importInput = document.getElementById("codex-import-input");
+
+        if (exportButton) {
+            exportButton.addEventListener("click", () => {
+                exportEntries();
+            });
+        }
+
+        if (importButton && refs.importInput) {
+            importButton.addEventListener("click", () => {
+                refs.importInput.click();
+            });
+
+            refs.importInput.addEventListener("change", () => {
+                const file = refs.importInput.files[0];
+                if (!file) {
+                    return;
+                }
+                importEntriesFromFile(file, { merge: true })
+                    .then(entries => {
+                        state.entries = entries;
+                        refs.importInput.value = "";
+                        renderAll();
+                    })
+                    .catch(() => {
+                        alert("Invalid Codex entries file.");
+                        refs.importInput.value = "";
+                    });
+            });
+        }
     }
 
     function renderNewForm() {
@@ -323,6 +341,14 @@ const CodexUI = (function () {
                         type="text"
                     >
                 </div>
+                <div class="codex-field-wrapper">
+                    <label class="codex-field-label" for="codex-new-category">Category</label>
+                    <input
+                        id="codex-new-category"
+                        class="codex-input"
+                        type="text"
+                    >
+                </div>
                 <button
                     type="submit"
                     class="codex-add-button"
@@ -331,6 +357,51 @@ const CodexUI = (function () {
                 </button>
             </form>
         `;
+
+        const form = refs.newContainer.querySelector("#codex-new-form");
+        if (form) {
+            form.addEventListener("submit", event => {
+                event.preventDefault();
+                const titleInput = form.querySelector("#codex-new-title");
+                const descriptionInput = form.querySelector("#codex-new-description");
+                const notesInput = form.querySelector("#codex-new-notes");
+                const tagsInput = form.querySelector("#codex-new-tags");
+                const categoryInput = form.querySelector("#codex-new-category");
+
+                const title = titleInput ? titleInput.value.trim() : "";
+                const description = descriptionInput ? descriptionInput.value.trim() : "";
+                const notes = notesInput ? notesInput.value.trim() : "";
+                const tagsRaw = tagsInput ? tagsInput.value : "";
+                const category = categoryInput ? categoryInput.value.trim() : "";
+
+                const tags = tagsRaw
+                    .split(",")
+                    .map(t => t.trim())
+                    .filter(t => t.length > 0);
+
+                const now = new Date().toISOString();
+
+                const entry = validateEntry({
+                    id:
+                        typeof crypto !== "undefined" && crypto.randomUUID
+                            ? crypto.randomUUID()
+                            : `codex-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                    title,
+                    description,
+                    notes,
+                    favorite: false,
+                    tags,
+                    category,
+                    createdAt: now,
+                    updatedAt: now
+                });
+
+                state.entries.push(entry);
+                state.entries = saveEntries(state.entries);
+                form.reset();
+                renderAll();
+            });
+        }
     }
 
     function renderList() {
@@ -339,20 +410,21 @@ const CodexUI = (function () {
         }
 
         const filtered = filterEntries(state.entries, state.filters);
+        const sorted = sortEntries(filtered, state.filters.sort);
 
-        if (filtered.length === 0) {
+        if (sorted.length === 0) {
             refs.listContainer.innerHTML = `<div class="codex-empty">No entries match your filters.</div>`;
             return;
         }
 
-        refs.listContainer.innerHTML = filtered
-            .map(entry => renderCard(entry))
-            .join("");
+        refs.listContainer.innerHTML = sorted.map(entry => renderCard(entry)).join("");
     }
 
     function renderCard(entry) {
         const tagsValue = Array.isArray(entry.tags) ? entry.tags.join(", ") : "";
         const favoriteLabel = entry.favorite ? "Unfavorite entry" : "Favorite entry";
+        const categoryValue = entry.category || "";
+        const updatedAt = entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : "";
 
         return `
             <article
@@ -403,6 +475,20 @@ const CodexUI = (function () {
                         value="${tagsValue.replace(/"/g, "&quot;")}"
                         aria-label="Entry tags"
                     >
+                </div>
+                <div class="codex-card-row">
+                    <span class="codex-card-label">Category</span>
+                    <input
+                        class="codex-card-input"
+                        type="text"
+                        data-field="category"
+                        value="${categoryValue.replace(/"/g, "&quot;")}"
+                        aria-label="Entry category"
+                    >
+                </div>
+                <div class="codex-card-row">
+                    <span class="codex-card-label">Last updated</span>
+                    <span aria-label="Last updated timestamp">${updatedAt}</span>
                 </div>
                 <div class="codex-card-buttons">
                     <button

@@ -1,16 +1,38 @@
 const CODEX_STORAGE_KEY = "codexEntries";
-const CODEX_SCHEMA_VERSION = 1;
+const CODEX_SCHEMA_VERSION = 2;
 
 function validateEntry(raw) {
     const safe = typeof raw === "object" && raw !== null ? raw : {};
-    const id = typeof safe.id === "string" && safe.id.trim() ? safe.id : crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const id =
+        typeof safe.id === "string" && safe.id.trim()
+            ? safe.id
+            : (typeof crypto !== "undefined" && crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : `codex-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
     const title = typeof safe.title === "string" ? safe.title : "";
     const description = typeof safe.description === "string" ? safe.description : "";
     const notes = typeof safe.notes === "string" ? safe.notes : "";
     const favorite = typeof safe.favorite === "boolean" ? safe.favorite : false;
+
     const tags = Array.isArray(safe.tags)
         ? safe.tags.map(t => String(t).trim()).filter(t => t.length > 0)
         : [];
+
+    const category = typeof safe.category === "string" ? safe.category : "";
+
+    const createdAt =
+        typeof safe.createdAt === "string" && safe.createdAt.trim()
+            ? safe.createdAt
+            : now;
+
+    const updatedAt =
+        typeof safe.updatedAt === "string" && safe.updatedAt.trim()
+            ? safe.updatedAt
+            : createdAt;
+
     return {
         id,
         title,
@@ -18,6 +40,9 @@ function validateEntry(raw) {
         notes,
         favorite,
         tags,
+        category,
+        createdAt,
+        updatedAt,
         schemaVersion: CODEX_SCHEMA_VERSION
     };
 }
