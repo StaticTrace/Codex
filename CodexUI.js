@@ -1,5 +1,6 @@
 // CodexUI.js
 // Handles Codex UI: listing, filters, editing, autosave, markdown, highlighting + PWA offline sync strategies.
+// IMPROVED: debounced search, toast notifications, enhanced empty state, better responsive UX.
 
 (function () {
     const AUTOSAVE_KEY = "codexDraft";
@@ -23,6 +24,52 @@
         editingId: null,
         isOffline: !navigator.onLine
     };
+
+    /* -----------------------------
+       TOAST NOTIFICATIONS (NEW UX IMPROVEMENT)
+    ----------------------------- */
+    function showToast(message, type = "success") {
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // Auto-remove
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 300);
+        }, 2800);
+    }
+
+    /* -----------------------------
+       DEBOUNCE HELPER (NEW UX IMPROVEMENT)
+    ----------------------------- */
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    /* -----------------------------
+       CLEAR ALL FILTERS (NEW UX IMPROVEMENT)
+    ----------------------------- */
+    function clearAllFilters() {
+        state.filters = {
+            search: "",
+            tag: "",
+            category: "",
+            favoritesOnly: false,
+            sort: "updatedAtDesc"
+        };
+        saveFilters();
+        renderFilters();
+        renderList();
+        showToast("Filters cleared", "success");
+    }
+    // Expose globally for inline onclick in empty state
+    window.clearAllFilters = clearAllFilters;
 
     /* -----------------------------
        AUTOSAVE DRAFT
@@ -233,7 +280,7 @@
     }
 
     /* -----------------------------
-       RENDER FILTERS
+       RENDER FILTERS (with debounced search)
     ----------------------------- */
 
     function renderFilters() {
@@ -247,11 +294,15 @@
         searchInput.placeholder = "Search entries…";
         searchInput.value = state.filters.search;
         searchInput.setAttribute("aria-label", "Search entries");
-        searchInput.addEventListener("input", () => {
+
+        // DEBOUNCED SEARCH for smooth UX
+        const debouncedSearch = debounce(() => {
             state.filters.search = searchInput.value;
             saveFilters();
             renderList();
-        });
+        }, 280);
+
+        searchInput.addEventListener("input", debouncedSearch);
 
         const tagSelect = document.createElement("select");
         const tagDefault = document.createElement("option");
@@ -350,6 +401,7 @@
         exportButton.textContent = "Export entries";
         exportButton.addEventListener("click", () => {
             window.CodexStorage.exportEntries();
+            showToast("Entries exported successfully");
         });
 
         const importLabel = document.createElement("label");
@@ -366,10 +418,11 @@
                     state.entries = entries;
                     renderFilters();
                     renderList();
+                    showToast("Entries imported successfully");
                 })
                 .catch(err => {
                     console.error("Import failed:", err);
-                    alert("Failed to import entries.");
+                    showToast("Failed to import entries", "error");
                 });
         });
         importLabel.appendChild(importInput);
@@ -384,6 +437,7 @@
             await window.CodexStorage.saveEntries(state.entries);
             renderFilters();
             renderList();
+            showToast("All entries deleted", "success");
         });
 
         toolsContainer.appendChild(exportButton);
@@ -453,7 +507,7 @@
             const content = contentTextarea.value;
 
             if (!title) {
-                alert("Title is required.");
+                showToast("Title is required", "error");
                 return;
             }
 
@@ -471,7 +525,6 @@
             state.entries.push(entry);
             await window.CodexStorage.saveEntries(state.entries);
 
-            // PWA Offline Sync Strategy: queue if offline
             if (state.isOffline) {
                 await queueOperation("create", entry);
             }
@@ -484,6 +537,7 @@
 
             renderFilters();
             renderList();
+            showToast("Entry added successfully");
         });
 
         form.appendChild(titleInput);
@@ -496,7 +550,7 @@
     }
 
     /* -----------------------------
-       RENDER ENTRY LIST (with editing support)
+       RENDER ENTRY LIST (enhanced empty state + UX)
     ----------------------------- */
 
     function renderList() {
@@ -509,8 +563,16 @@
         const searchQuery = state.filters.search;
 
         if (filtered.length === 0) {
-            const empty = document.createElement("p");
-            empty.textContent = "No entries match your filters.";
+            const empty = document.createElement("div");
+            empty.className = "codex-empty";
+            empty.style.textAlign = "center";
+            empty.style.padding = "60px 20px";
+            empty.innerHTML = `
+                <div style="font-size: 4rem; margin-bottom: 16px; opacity: 0.25;">📪</div>
+                <p style="font-size:1.1rem;margin-bottom:8px;">No entries match your filters</p>
+                <p style="color:#777;font-size:0.95rem;">Try a different search term or adjust filters above.</p>
+                <button onclick="clearAllFilters()" style="margin-top:20px;background:#58a6ff;color:#fff;border:none;padding:10px 24px;border-radius:9999px;cursor:pointer;font-weight:600;">Clear all filters</button>
+            `;
             listContainer.appendChild(empty);
             return;
         }
@@ -535,6 +597,8 @@
                 titleEl.type = "text";
                 titleEl.value = entry.title;
                 titleEl.className = "codex-card-title-input";
+                // Auto-focus for better UX
+                setTimeout(() => titleEl.focus(), 10);
             } else {
                 titleEl = document.createElement("h3");
                 titleEl.className = "codex-card-title";
@@ -580,6 +644,7 @@
                 }
 
                 renderList();
+                showToast(entry.favorite ? "Added to favorites" : "Removed from favorites");
             });
             header.appendChild(favoriteButton);
 
@@ -645,7 +710,7 @@
                 saveButton.addEventListener("click", async () => {
                     const newTitle = titleEl.value.trim();
                     if (!newTitle) {
-                        alert("Title is required.");
+                        showToast("Title is required", "error");
                         return;
                     }
                     const newCategory = catInput.value.trim();
@@ -667,6 +732,7 @@
                     state.editingId = null;
                     renderFilters();
                     renderList();
+                    showToast("Entry updated successfully");
                 });
 
                 const cancelButton = document.createElement("button");
@@ -692,6 +758,7 @@
                     state.editingId = null;
                     renderFilters();
                     renderList();
+                    showToast("Entry deleted", "success");
                 });
 
                 const btnGroup = document.createElement("div");
@@ -740,6 +807,7 @@
 
                     renderFilters();
                     renderList();
+                    showToast("Entry deleted", "success");
                 });
 
                 const btnGroup = document.createElement("div");
@@ -781,11 +849,10 @@
         window.addEventListener("online", async () => {
             state.isOffline = false;
             renderOfflineBanner();
-            // Process any queued operations (demo)
             await window.CodexStorage.processSyncQueue();
-            // Refresh list in case of background changes
             state.entries = await window.CodexStorage.loadEntries();
             renderList();
+            showToast("Back online — synced successfully");
         });
 
         window.addEventListener("offline", () => {
@@ -793,7 +860,6 @@
             renderOfflineBanner();
         });
 
-        // Initial sync queue processing if already online
         if (!state.isOffline) {
             await window.CodexStorage.processSyncQueue();
         }

@@ -4,6 +4,12 @@
     --header-bg: #2c3e50;
     --header-text: #ffffff;
     --card-bg: #ffffff;
+    /* NEW: Modern UI variables for improved layout & UX */
+    --accent-color: #58a6ff;
+    --border-radius: 12px;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Themes via data attributes */
@@ -61,7 +67,7 @@ body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: var(--transition);
 }
 
 /* Font size via data attribute */
@@ -77,20 +83,23 @@ body[data-font-size="large"] {
     font-size: 18px;
 }
 
-/* Header */
+/* Header - improved spacing & modern look */
 header {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.25rem;
     background-color: var(--header-bg);
     color: var(--header-text);
     border-bottom: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 header h1 {
     margin: 0;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
 }
 
 #settings-button {
@@ -99,18 +108,20 @@ header h1 {
     background: none;
     color: var(--header-text);
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    transition: var(--transition);
 }
 
 #settings-button:hover {
-    opacity: 0.85;
+    transform: rotate(90deg);
+    opacity: 0.9;
 }
 
 /* Global nav */
 .global-nav-list {
     list-style: none;
     display: flex;
-    gap: 0.75rem;
+    gap: 1rem;
     margin: 0;
     padding: 0;
 }
@@ -118,24 +129,28 @@ header h1 {
 .global-nav-list a {
     text-decoration: none;
     color: var(--header-text);
+    font-weight: 500;
+    transition: var(--transition);
 }
 
 .global-nav-list a:hover {
     text-decoration: underline;
+    opacity: 0.9;
 }
 
-/* Main */
+/* Main - improved container with modern shadow & radius */
 main {
-    padding: 1rem;
-    max-width: 1000px;
-    margin: 20px auto;
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 24px auto;
     background-color: var(--card-bg);
-    border-radius: 8px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
     box-sizing: border-box;
-    transition: background-color 0.25s ease;
+    transition: var(--transition);
 }
 
-/* Settings overlay & panel */
+/* Settings overlay & panel (kept but smoother) */
 .settings-overlay {
     position: fixed;
     top: 0;
@@ -143,11 +158,11 @@ main {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
     z-index: 900;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease;
+    transition: var(--transition);
 }
 
 .settings-overlay.visible {
@@ -159,12 +174,12 @@ main {
     position: fixed;
     top: 0;
     right: 0;
-    width: 300px;
+    width: 320px;
     height: 100vh;
     background-color: var(--card-bg);
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
     transform: translateX(100%);
-    transition: transform 0.25s ease;
+    transition: var(--transition);
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -337,27 +352,56 @@ body[data-compact-mode="true"] .section-reset {
     border-color: #4a5f92;
 }
 
-/* Codex filters */
+/* === NEW: TOAST NOTIFICATIONS (UX improvement) === */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ffffff;
+    padding: 14px 28px;
+    border-radius: 9999px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+}
+
+.toast.success { background-color: #10b981; }
+.toast.error { background-color: #ef4444; }
+
+@keyframes toastIn {
+    0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Codex filters - improved spacing & modern look */
 .codex-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
 }
 
-.codex-filter-input {
-    padding: 6px 8px;
-    border-radius: 4px;
-    border: 1px solid #bbb;
-    flex: 1 1 180px;
-    box-sizing: border-box;
-}
-
+.codex-filter-input,
 .codex-filter-select {
-    padding: 6px 8px;
-    border-radius: 4px;
+    padding: 10px 14px;
+    border-radius: var(--border-radius);
     border: 1px solid #bbb;
-    min-width: 140px;
+    flex: 1 1 220px;
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+.codex-filter-input:focus,
+.codex-filter-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
 }
 
 .codex-filter-favorite {
@@ -374,13 +418,14 @@ body[data-compact-mode="true"] .section-reset {
     margin-right: 0.5rem;
 }
 
-/* Codex new form */
+/* Codex new form - card-like with better shadow */
 .codex-new-container {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 20px;
-    background-color: #f7f7f7;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 28px;
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
 }
 
 .codex-new-inner {
@@ -401,21 +446,22 @@ body[data-compact-mode="true"] .section-reset {
 }
 
 .codex-input {
-    padding: 6px 8px;
-    border-radius: 4px;
+    padding: 10px 14px;
+    border-radius: var(--border-radius);
     border: 1px solid #bbb;
     box-sizing: border-box;
+    transition: var(--transition);
 }
 
 .codex-textarea {
-    min-height: 70px;
+    min-height: 120px;
     resize: vertical;
 }
 
 .codex-new-form {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .codex-new-form input[type="text"],
@@ -426,72 +472,124 @@ body[data-compact-mode="true"] .section-reset {
 
 .codex-add-button {
     margin-top: 10px;
-    padding: 8px 14px;
-    border-radius: 4px;
+    padding: 12px 20px;
+    border-radius: 9999px;
     border: none;
     color: #ffffff;
     cursor: pointer;
-    font-weight: bold;
-    background-color: #5a6fa8;
+    font-weight: 600;
+    background-color: var(--accent-color);
+    box-shadow: var(--card-shadow);
 }
 
 .codex-add-button:hover {
-    background-color: #4a5f92;
+    transform: translateY(-1px);
+    box-shadow: var(--card-shadow-hover);
 }
 
-/* Codex list & cards */
+/* Codex tools - pill-style buttons */
+.codex-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.codex-tool-button,
+.codex-import-label {
+    padding: 10px 20px;
+    border-radius: 9999px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: var(--accent-color);
+    color: #ffffff;
+    transition: var(--transition);
+    box-shadow: var(--card-shadow);
+}
+
+.codex-tool-button:hover,
+.codex-import-label:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.codex-import-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.codex-import-label input[type="file"] {
+    display: none;
+}
+
+/* Codex list & cards - modern hover & layout */
 .codex-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .codex-card {
     border: 1px solid #ddd;
-    border-top-width: 4px;
-    border-radius: 6px;
-    padding: 10px;
-    background-color: #fafafa;
+    border-top-width: 5px;
+    border-radius: var(--border-radius);
+    padding: 16px;
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
     outline: none;
 }
 
+.codex-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+}
+
 .codex-card:focus {
-    box-shadow: 0 0 0 2px #0077cc;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
 }
 
 .codex-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .codex-card-title-input {
     flex: 1;
-    padding: 6px 8px;
-    border-radius: 4px;
-    border: 1px solid #bbb;
-    box-sizing: border-box;
+    padding: 10px 14px;
+    border-radius: var(--border-radius);
+    border: 2px solid var(--accent-color);
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .codex-card-title {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .codex-favorite-button {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     border: none;
     background-color: #ffeaa7;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 22px;
+    flex-shrink: 0;
+    transition: var(--transition);
 }
 
 .codex-favorite-button[aria-pressed="true"] {
     background-color: #fdcb6e;
+    transform: scale(1.1);
 }
 
 .codex-card-row {
@@ -509,14 +607,14 @@ body[data-compact-mode="true"] .section-reset {
 
 .codex-card-input {
     flex: 1;
-    padding: 6px 8px;
-    border-radius: 4px;
+    padding: 10px 14px;
+    border-radius: var(--border-radius);
     border: 1px solid #bbb;
     box-sizing: border-box;
 }
 
 .codex-card-textarea {
-    min-height: 70px;
+    min-height: 120px;
     resize: vertical;
 }
 
@@ -529,15 +627,16 @@ body[data-compact-mode="true"] .section-reset {
 
 .codex-save-button,
 .codex-delete-button {
-    padding: 6px 10px;
-    border-radius: 4px;
+    padding: 10px 18px;
+    border-radius: 9999px;
     border: none;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 600;
 }
 
 .codex-save-button {
-    background-color: #5a6fa8;
+    background-color: var(--accent-color);
     color: #ffffff;
 }
 
@@ -549,73 +648,49 @@ body[data-compact-mode="true"] .section-reset {
 .codex-empty {
     font-style: italic;
     color: #777777;
+    text-align: center;
+    padding: 60px 20px;
 }
 
 /* Additional card display styles */
 .codex-card-meta {
-    margin-left: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     font-size: 0.85rem;
     color: #555;
+    margin-top: 4px;
 }
 
 .codex-card-category {
-    margin-right: 0.5rem;
+    background: rgba(88,166,255,0.1);
+    color: var(--accent-color);
+    padding: 2px 10px;
+    border-radius: 9999px;
     font-weight: 600;
 }
 
 .codex-card-tags .codex-tag {
     display: inline-block;
-    padding: 0.1rem 0.35rem;
-    margin-right: 0.25rem;
-    border-radius: 999px;
+    padding: 2px 10px;
+    margin-right: 4px;
+    border-radius: 9999px;
     background-color: #e0e7ff;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    color: #3b4a6b;
 }
 
 .codex-card-body {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
     font-size: 0.95rem;
 }
 
 .codex-card-footer {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
     display: flex;
     justify-content: space-between;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #666;
-}
-
-/* Codex tools */
-.codex-tools {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
-.codex-tool-button {
-    padding: 6px 10px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    background-color: #5a6fa8;
-    color: #ffffff;
-}
-
-.codex-tool-button:hover {
-    background-color: #4a5f92;
-}
-
-.codex-import-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    margin-right: 0.5rem;
-}
-
-.codex-import-label input[type="file"] {
-    display: none;
 }
 
 /* Search highlighting */
@@ -654,8 +729,8 @@ mark {
 .codex-card-body pre {
     background-color: #111827;
     color: #e5e7eb;
-    padding: 0.5rem;
-    border-radius: 4px;
+    padding: 16px;
+    border-radius: var(--border-radius);
     overflow-x: auto;
     font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 0.9em;
@@ -689,20 +764,31 @@ mark {
     font-weight: 600;
 }
 
-/* Responsive */
+/* Responsive layout - improved grid for better desktop/mobile UX */
 @media (min-width: 900px) {
     #codex-app {
         display: grid;
-        grid-template-columns: 1fr 2fr;
+        grid-template-columns: 260px 1fr;
         grid-template-areas:
             "filters tools"
-            "new list";
+            "filters new"
+            "filters list";
+        gap: 24px;
     }
-
     #codex-filters { grid-area: filters; }
     #codex-tools   { grid-area: tools; }
     #codex-new     { grid-area: new; }
     #codex-list    { grid-area: list; }
+}
+
+@media (max-width: 899px) {
+    main {
+        padding: 1rem;
+    }
+    .codex-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 /* Storage management styles */
