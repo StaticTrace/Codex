@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codex</title>
+
     <link rel="stylesheet" href="Styles.css">
+
+    <!-- Shared navigation + settings loader -->
     <script src="Shared.js" defer></script>
+
+    <!-- Settings logic -->
+    <script src="Settings.js" defer></script>
+
+    <!-- Codex scripts -->
     <script src="CodexConfig.js" defer></script>
     <script src="CodexStorage.js" defer></script>
     <script src="CodexUI.js" defer></script>
 </head>
+
 <body>
     <header>
         <h1>📘 Codex</h1>
@@ -34,7 +43,7 @@
         <section id="codex-list" class="codex-list"></section>
     </main>
 
-    <!-- Settings panel will be injected here -->
+    <!-- Settings panel gets injected here -->
     <div id="global-settings"></div>
 </body>
 </html>
