@@ -665,6 +665,7 @@
                     }
 
                     state.editingId = null;
+                    renderFilters();
                     renderList();
                 });
 
@@ -689,6 +690,7 @@
                     }
 
                     state.editingId = null;
+                    renderFilters();
                     renderList();
                 });
 

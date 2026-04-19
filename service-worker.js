@@ -1,26 +1,25 @@
 const CACHE_NAME = "codex-cache-v2";
 
 const CORE_ASSETS = [
-  "/",
-  "/index.html",
-  "/Home.html",
-  "/Codex.html",
-  "/manifest.json",
+  "index.html",
+  "Home.html",
+  "Codex.html",
+  "manifest.json",
 
   // Styles
-  "/Styles.css",
+  "Styles.css",
 
   // JavaScript
-  "/Shared.js",
-  "/Settings.js",
-  "/CodexUI.js",
-  "/CodexStorage.js",
-  "/marked.min.js",
+  "Shared.js",
+  "Settings.js",
+  "CodexUI.js",
+  "CodexStorage.js",
+  "marked.min.js",
 
   // Icons
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/icon-512-maskable.png"
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+  "icons/icon-512-maskable.png"
 ];
 
 // Install: cache core assets

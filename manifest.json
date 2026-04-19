@@ -4,8 +4,8 @@
   "short_name": "Codex",
   "lang": "en",
   "description": "A lightweight, offline-capable knowledge and notes system with Markdown, tagging, filters, and local storage.",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0d1117",
@@ -20,19 +20,19 @@
 
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512-maskable.png",
+      "src": "icons/icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -43,10 +43,10 @@
     {
       "name": "Open Codex",
       "short_name": "Codex",
-      "url": "/Codex.html",
+      "url": "Codex.html",
       "icons": [
         {
-          "src": "/icons/icon-192.png",
+          "src": "icons/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
