@@ -1,0 +1,490 @@
+:root {
+    --bg-color: #f4f4f4;
+    --text-color: #333;
+    --header-bg: #2c3e50;
+    --header-text: white;
+    --card-bg: #ffffff;
+}
+
+/* Themes */
+.dark-theme {
+    --bg-color: #1e1e1e;
+    --text-color: #e0e0e0;
+    --header-bg: #111;
+    --header-text: #f5f5f5;
+    --card-bg: #2a2a2a;
+}
+
+.blue-theme {
+    --bg-color: #e8ecf5;
+    --text-color: #2a2f3a;
+    --header-bg: #3b4a6b;
+    --header-text: #ffffff;
+    --card-bg: #ffffff;
+}
+
+.solarized-theme {
+    --bg-color: #fdf6e3;
+    --text-color: #586e75;
+    --header-bg: #657b83;
+    --header-text: #fdf6e3;
+    --card-bg: #eee8d5;
+}
+
+.pastel-theme {
+    --bg-color: #faf4ff;
+    --text-color: #4a4a4a;
+    --header-bg: #c7b8ea;
+    --header-text: #ffffff;
+    --card-bg: #ffffff;
+}
+
+.high-contrast {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --header-bg: #000000;
+    --header-text: #ffff00;
+    --card-bg: #000000;
+}
+
+/* Base */
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+body.font-small { font-size: 14px; }
+body.font-medium { font-size: 16px; }
+body.font-large { font-size: 18px; }
+
+/* Header */
+header {
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    padding: 20px;
+    text-align: center;
+    position: relative;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+nav ul li a {
+    color: var(--header-text);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* Main */
+main {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 20px auto;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: background-color 0.25s ease;
+}
+
+/* Settings button */
+#settings-button {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    padding: 8px 10px;
+    border: none;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    border-radius: 50%;
+    font-size: 16px;
+}
+
+#settings-button:hover {
+    opacity: 0.85;
+}
+
+/* Settings overlay & panel */
+.settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+    z-index: 900;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.settings-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.settings-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh;
+    background-color: var(--card-bg);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-panel.visible {
+    transform: translateX(0);
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #ccc;
+}
+
+#settings-close {
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.settings-search {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+#settings-search-input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+}
+
+.settings-content {
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.settings-section {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.section-body {
+    padding-left: 5px;
+}
+
+.section-body.hidden {
+    display: none;
+}
+
+.arrow {
+    transition: transform 0.2s ease;
+}
+
+.arrow.collapsed {
+    transform: rotate(-90deg);
+}
+
+.advanced-button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border: none;
+    background-color: #5a6fa8;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.advanced-button:hover {
+    background-color: #4a5f92;
+}
+
+.reset-button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background-color: #d9534f;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.reset-button:hover {
+    background-color: #c9302c;
+}
+
+.section-reset {
+    margin-top: 8px;
+    padding: 8px;
+    width: 100%;
+    border: none;
+    background-color: #888;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.section-reset:hover {
+    background-color: #666;
+}
+
+body.compact-mode .settings-panel {
+    width: 260px;
+}
+
+body.compact-mode .settings-content {
+    padding: 10px;
+}
+
+body.compact-mode .settings-section {
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+}
+
+body.compact-mode .section-header {
+    font-size: 14px;
+    padding: 4px 0;
+}
+
+body.compact-mode .section-body label {
+    margin-bottom: 4px;
+}
+
+body.compact-mode .advanced-button,
+body.compact-mode .section-reset {
+    padding: 6px;
+    font-size: 13px;
+}
+
+/* Helpers */
+.hidden {
+    display: none;
+}
+
+/* Tabs */
+.tab-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tab-button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #e0e0e0;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.tab-button.active {
+    background-color: #5a6fa8;
+    color: #ffffff;
+    border-color: #4a5f92;
+}
+
+/* Codex filters */
+.codex-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.codex-filter-input {
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    flex: 1 1 180px;
+    box-sizing: border-box;
+}
+
+.codex-filter-favorite {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+}
+
+/* Codex new form */
+.codex-new-container {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 20px;
+    background-color: #f7f7f7;
+}
+
+.codex-new-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.codex-field-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.codex-field-label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.codex-input {
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    box-sizing: border-box;
+}
+
+.codex-textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+.codex-add-button {
+    margin-top: 10px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Codex list & cards */
+.codex-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.codex-card {
+    border: 1px solid #ddd;
+    border-top-width: 4px;
+    border-radius: 6px;
+    padding: 10px;
+    background-color: #fafafa;
+}
+
+.codex-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.codex-card-title-input {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    box-sizing: border-box;
+}
+
+.codex-favorite-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background-color: #ffeaa7;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.codex-card-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.codex-card-label {
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.codex-card-input {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    box-sizing: border-box;
+}
+
+.codex-card-textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+.codex-card-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.codex-save-button,
+.codex-delete-button {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.codex-save-button {
+    background-color: #5a6fa8;
+    color: #ffffff;
+}
+
+.codex-delete-button {
+    background-color: #d9534f;
+    color: #ffffff;
+}
+
+.codex-empty {
+    font-style: italic;
+    color: #777;
+}
