@@ -1,115 +1,131 @@
-const CODEX_STORAGE_KEY = "codexEntries";
-const CODEX_SCHEMA_VERSION = 2;
+// CodexStorage.js
+// Handles persistent storage of Codex entries with safe localStorage access.
 
-function validateEntry(raw) {
-    const safe = typeof raw === "object" && raw !== null ? raw : {};
-    const now = new Date().toISOString();
+(function () {
+    const STORAGE_KEY = "codexEntries";
+    const SCHEMA_VERSION = 2;
 
-    const id =
-        typeof safe.id === "string" && safe.id.trim()
-            ? safe.id
-            : (typeof crypto !== "undefined" && crypto.randomUUID
-                  ? crypto.randomUUID()
-                  : `codex-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    let memoryStore = [];
 
-    const title = typeof safe.title === "string" ? safe.title : "";
-    const description = typeof safe.description === "string" ? safe.description : "";
-    const notes = typeof safe.notes === "string" ? safe.notes : "";
-    const favorite = typeof safe.favorite === "boolean" ? safe.favorite : false;
-
-    const tags = Array.isArray(safe.tags)
-        ? safe.tags.map(t => String(t).trim()).filter(t => t.length > 0)
-        : [];
-
-    const category = typeof safe.category === "string" ? safe.category : "";
-
-    const createdAt =
-        typeof safe.createdAt === "string" && safe.createdAt.trim()
-            ? safe.createdAt
-            : now;
-
-    const updatedAt =
-        typeof safe.updatedAt === "string" && safe.updatedAt.trim()
-            ? safe.updatedAt
-            : createdAt;
-
-    return {
-        id,
-        title,
-        description,
-        notes,
-        favorite,
-        tags,
-        category,
-        createdAt,
-        updatedAt,
-        schemaVersion: CODEX_SCHEMA_VERSION
-    };
-}
-
-function normalizeEntries(entries) {
-    if (!Array.isArray(entries)) {
-        return [];
+    function safeGetItem(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            console.warn("localStorage getItem failed, using memory store:", e);
+            return null;
+        }
     }
-    return entries.map(validateEntry);
-}
 
-function loadEntries() {
-    const raw = localStorage.getItem(CODEX_STORAGE_KEY);
-    if (!raw) {
-        return [];
+    function safeSetItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            console.warn("localStorage setItem failed, using memory store:", e);
+        }
     }
-    try {
-        const parsed = JSON.parse(raw);
-        return normalizeEntries(parsed);
-    } catch {
-        localStorage.removeItem(CODEX_STORAGE_KEY);
-        return [];
+
+    function generateId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+            return window.crypto.randomUUID();
+        }
+        return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
     }
-}
 
-function saveEntries(entries) {
-    const normalized = normalizeEntries(entries);
-    localStorage.setItem(CODEX_STORAGE_KEY, JSON.stringify(normalized));
-    return normalized;
-}
-
-function exportEntries() {
-    const entries = loadEntries();
-    const data = JSON.stringify(entries, null, 4);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "codex-entries.json";
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function importEntriesFromFile(file, options = { merge: true }) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            try {
-                const parsed = JSON.parse(reader.result);
-                const imported = normalizeEntries(parsed);
-                const existing = loadEntries();
-                let combined;
-                if (options.merge) {
-                    const byId = new Map();
-                    existing.forEach(entry => byId.set(entry.id, entry));
-                    imported.forEach(entry => byId.set(entry.id, entry));
-                    combined = Array.from(byId.values());
-                } else {
-                    combined = imported;
-                }
-                const saved = saveEntries(combined);
-                resolve(saved);
-            } catch (error) {
-                reject(error);
-            }
+    function validateEntry(entry) {
+        const now = new Date().toISOString();
+        const safe = {
+            id: entry.id || generateId(),
+            title: (entry.title || "").trim(),
+            category: (entry.category || "").trim(),
+            tags: Array.isArray(entry.tags) ? entry.tags : [],
+            content: (entry.content || "").toString(),
+            favorite: Boolean(entry.favorite),
+            createdAt: entry.createdAt || now,
+            updatedAt: entry.updatedAt || now,
+            schemaVersion: SCHEMA_VERSION
         };
-        reader.onerror = () => reject(reader.error);
-        reader.readAsText(file);
-    });
-}
+        return safe;
+    }
+
+    function normalizeEntries(entries) {
+        if (!Array.isArray(entries)) return [];
+        return entries.map(validateEntry);
+    }
+
+    function loadEntries() {
+        const raw = safeGetItem(STORAGE_KEY);
+        if (!raw) {
+            return memoryStore.slice();
+        }
+        try {
+            const parsed = JSON.parse(raw);
+            const normalized = normalizeEntries(parsed);
+            memoryStore = normalized.slice();
+            return normalized;
+        } catch (e) {
+            console.error("Failed to parse stored entries:", e);
+            return memoryStore.slice();
+        }
+    }
+
+    function saveEntries(entries) {
+        const normalized = normalizeEntries(entries);
+        memoryStore = normalized.slice();
+        try {
+            safeSetItem(STORAGE_KEY, JSON.stringify(normalized));
+        } catch (e) {
+            console.error("Failed to save entries:", e);
+        }
+    }
+
+    function exportEntries() {
+        const entries = loadEntries();
+        const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "codex-entries.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function importEntriesFromFile(file, options) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const parsed = JSON.parse(reader.result);
+                    const imported = normalizeEntries(parsed);
+                    const current = loadEntries();
+                    let merged;
+                    if (options && options.merge) {
+                        const byId = new Map();
+                        current.forEach(e => byId.set(e.id, e));
+                        imported.forEach(e => byId.set(e.id, e));
+                        merged = Array.from(byId.values());
+                    } else {
+                        merged = imported;
+                    }
+                    saveEntries(merged);
+                    resolve(merged);
+                } catch (e) {
+                    reject(e);
+                }
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsText(file);
+        });
+    }
+
+    window.CodexStorage = {
+        SCHEMA_VERSION,
+        validateEntry,
+        normalizeEntries,
+        loadEntries,
+        saveEntries,
+        exportEntries,
+        importEntriesFromFile
+    };
+})();

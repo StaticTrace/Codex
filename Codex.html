@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="Styles.css">
     <script src="Shared.js" defer></script>
     <script src="Settings.js" defer></script>
+    <script src="marked.min.js" defer></script>
     <script src="CodexStorage.js" defer></script>
     <script src="CodexFilters.js" defer></script>
     <script src="CodexUI.js" defer></script>
@@ -13,25 +14,16 @@
 <body>
     <header>
         <h1>Codex</h1>
-        <nav id="global-nav" aria-label="Global navigation"></nav>
-        <button id="settings-button" type="button" aria-label="Open settings">⚙️</button>
-        <div id="global-settings"></div>
+        <nav id="global-nav"></nav>
+        <button id="settings-button" aria-label="Open settings">⚙️</button>
+        <div id="global-settings" tabindex="-1"></div>
     </header>
 
-    <main>
-        <section id="codex-app" aria-label="Codex entries">
-            <div id="codex-filters" class="codex-filters"></div>
-
-            <div id="codex-tools" class="codex-tools"></div>
-
-            <section class="codex-new-container" aria-label="New entry">
-                <div id="codex-new"></div>
-            </section>
-
-            <section aria-label="Entries list">
-                <div id="codex-list" class="codex-list"></div>
-            </section>
-        </section>
+    <main id="codex-app">
+        <section id="codex-filters" aria-label="Codex filters"></section>
+        <section id="codex-tools" aria-label="Codex tools"></section>
+        <section id="codex-new" aria-label="Create new entry"></section>
+        <section id="codex-list" aria-label="Codex entries"></section>
     </main>
 </body>
 </html>

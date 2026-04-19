@@ -1,12 +1,23 @@
 const CACHE_NAME = "codex-cache-v1";
 
-// Core assets to cache for offline use
 const CORE_ASSETS = [
   "/",
   "/index.html",
+  "/Home.html",
+  "/Codex.html",
   "/manifest.json",
-  "/styles.css",
-  "/main.js",
+
+  // Styles
+  "/Styles.css",
+
+  // JavaScript
+  "/Shared.js",
+  "/Settings.js",
+  "/CodexUI.js",
+  "/CodexStorage.js",
+  "/marked.min.js",
+
+  // Icons
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/icon-512-maskable.png"
@@ -17,7 +28,7 @@ self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS))
   );
-  self.skipWaiting(); // Activate immediately
+  self.skipWaiting();
 });
 
 // Activate: remove old caches
@@ -25,36 +36,31 @@ self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       )
     )
   );
-  self.clients.claim(); // Take control immediately
+  self.clients.claim();
 });
 
-// Fetch strategy: hybrid offline-first + auto-update
+// Fetch: offline-first with background update
 self.addEventListener("fetch", event => {
   const request = event.request;
 
-  // Only handle GET requests
   if (request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(request).then(cachedResponse => {
+    caches.match(request).then(cached => {
       const fetchPromise = fetch(request)
         .then(networkResponse => {
-          // Update cache with fresh version
           caches.open(CACHE_NAME).then(cache => {
             cache.put(request, networkResponse.clone());
           });
           return networkResponse;
         })
-        .catch(() => cachedResponse); // fallback to cache if offline
+        .catch(() => cached);
 
-      // If cached, return it immediately; otherwise wait for network
-      return cachedResponse || fetchPromise;
+      return cached || fetchPromise;
     })
   );
 });

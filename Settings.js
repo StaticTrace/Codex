@@ -269,3 +269,108 @@ function loadSettings() {
         }
     }
 }
+// Settings.js
+// Manages user settings: theme, font size, high contrast, compact mode.
+
+(function () {
+    const STORAGE_KEY = "userSettings";
+
+    const defaultSettings = {
+        theme: "light",
+        fontSize: "medium",
+        highContrast: false,
+        compactMode: false
+    };
+
+    function safeLoadSettings() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return { ...defaultSettings };
+            const parsed = JSON.parse(raw);
+            return { ...defaultSettings, ...parsed };
+        } catch (e) {
+            console.error("Failed to load settings:", e);
+            return { ...defaultSettings };
+        }
+    }
+
+    function safeSaveSettings(settings) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        } catch (e) {
+            console.error("Failed to save settings:", e);
+        }
+    }
+
+    function applySettings(settings) {
+        const body = document.body;
+        if (!body) return;
+
+        body.dataset.theme = settings.theme;
+        body.dataset.fontSize = settings.fontSize;
+        body.dataset.highContrast = String(settings.highContrast);
+        body.dataset.compactMode = String(settings.compactMode);
+    }
+
+    function wireControls(settings) {
+        const themeSelect = document.getElementById("settings-theme");
+        const fontSizeSelect = document.getElementById("settings-font-size");
+        const highContrastToggle = document.getElementById("settings-high-contrast");
+        const compactModeToggle = document.getElementById("settings-compact-mode");
+        const resetButton = document.getElementById("settings-reset");
+
+        if (themeSelect) {
+            themeSelect.value = settings.theme;
+            themeSelect.addEventListener("change", () => {
+                settings.theme = themeSelect.value;
+                applySettings(settings);
+                safeSaveSettings(settings);
+            });
+        }
+
+        if (fontSizeSelect) {
+            fontSizeSelect.value = settings.fontSize;
+            fontSizeSelect.addEventListener("change", () => {
+                settings.fontSize = fontSizeSelect.value;
+                applySettings(settings);
+                safeSaveSettings(settings);
+            });
+        }
+
+        if (highContrastToggle) {
+            highContrastToggle.checked = settings.highContrast;
+            highContrastToggle.addEventListener("change", () => {
+                settings.highContrast = highContrastToggle.checked;
+                applySettings(settings);
+                safeSaveSettings(settings);
+            });
+        }
+
+        if (compactModeToggle) {
+            compactModeToggle.checked = settings.compactMode;
+            compactModeToggle.addEventListener("change", () => {
+                settings.compactMode = compactModeToggle.checked;
+                applySettings(settings);
+                safeSaveSettings(settings);
+            });
+        }
+
+        if (resetButton) {
+            resetButton.addEventListener("click", () => {
+                const reset = { ...defaultSettings };
+                applySettings(reset);
+                safeSaveSettings(reset);
+                if (themeSelect) themeSelect.value = reset.theme;
+                if (fontSizeSelect) fontSizeSelect.value = reset.fontSize;
+                if (highContrastToggle) highContrastToggle.checked = reset.highContrast;
+                if (compactModeToggle) compactModeToggle.checked = reset.compactMode;
+            });
+        }
+    }
+
+    window.initSettings = function () {
+        const settings = safeLoadSettings();
+        applySettings(settings);
+        wireControls(settings);
+    };
+})();
