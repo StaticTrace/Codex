@@ -4,7 +4,7 @@
   "short_name": "Codex",
   "lang": "en",
   "description": "A lightweight, offline-capable knowledge and notes system with Markdown, tagging, filters, and local storage.",
-  "start_url": "index.html",
+  "start_url": "Home.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
