@@ -1,5 +1,5 @@
 // Shared.js
-// Handles global navigation, settings panel loading, modal behavior, and accessibility.
+// Handles global navigation, settings panel loading, and accessibility.
 
 (function () {
 
@@ -59,8 +59,6 @@
                 if (typeof window.initSettings === "function") {
                     window.initSettings();
                 }
-
-                setupModalBehavior();
             })
             .catch(err => {
                 console.error("Error loading settings panel:", err);
@@ -68,94 +66,10 @@
     }
 
     /* -----------------------------
-       SETTINGS BUTTON + MODAL LOGIC
-    ----------------------------- */
-    function setupSettingsButton() {
-        const button = document.getElementById("settings-button");
-        const panelContainer = document.getElementById("global-settings");
-        if (!button || !panelContainer) return;
-
-        button.addEventListener("click", () => {
-            const isOpen = panelContainer.getAttribute("data-open") === "true";
-            panelContainer.setAttribute("data-open", String(!isOpen));
-
-            if (!isOpen) {
-                panelContainer.focus();
-            }
-        });
-    }
-
-    /* -----------------------------
-       MODAL BEHAVIOR (ESC, OVERLAY, FOCUS TRAP)
-    ----------------------------- */
-    function setupModalBehavior() {
-        const panel = document.getElementById("settings-panel");
-        const overlay = document.getElementById("settings-overlay");
-        const container = document.getElementById("global-settings");
-
-        if (!panel || !overlay || !container) return;
-
-        /* Close modal */
-        function closePanel() {
-            container.setAttribute("data-open", "false");
-        }
-
-        /* ESC closes panel */
-        document.addEventListener("keydown", e => {
-            if (e.key === "Escape") {
-                closePanel();
-            }
-        });
-
-        /* Clicking overlay closes panel */
-        overlay.addEventListener("click", () => {
-            closePanel();
-        });
-
-        /* Auto-close when clicking navigation links */
-        document.addEventListener("click", e => {
-            if (e.target.tagName === "A") {
-                closePanel();
-            }
-        });
-
-        /* Focus trap */
-        function trapFocus() {
-            const focusable = panel.querySelectorAll(
-                "button, input, select, textarea, [tabindex]:not([tabindex='-1'])"
-            );
-
-            if (focusable.length === 0) return;
-
-            const first = focusable[0];
-            const last = focusable[focusable.length - 1];
-
-            panel.addEventListener("keydown", e => {
-                if (e.key !== "Tab") return;
-
-                if (e.shiftKey) {
-                    if (document.activeElement === first) {
-                        e.preventDefault();
-                        last.focus();
-                    }
-                } else {
-                    if (document.activeElement === last) {
-                        e.preventDefault();
-                        first.focus();
-                    }
-                }
-            });
-        }
-
-        trapFocus();
-    }
-
-    /* -----------------------------
        INITIALIZATION
     ----------------------------- */
     document.addEventListener("DOMContentLoaded", () => {
         createNav();
-        setupSettingsButton();
         loadSettingsPanel();
     });
 

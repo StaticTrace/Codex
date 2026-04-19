@@ -129,22 +129,31 @@ function setupSettingsUI() {
         });
     }
 
-    // Storage management setup
-    const clearStorageBtn = document.getElementById("clear-storage-btn");
-    if (clearStorageBtn) {
-        clearStorageBtn.addEventListener("click", () => {
-            if (confirm("⚠️ This will PERMANENTLY delete ALL data stored in LocalStorage:\n• Codex entries\n• Drafts\n• Settings\n\nAre you absolutely sure?")) {
-                if (confirm("Final confirmation: This cannot be undone. Proceed?")) {
-                    try {
-                        localStorage.clear();
-                        alert("✅ LocalStorage has been cleared successfully.");
-                        window.location.reload(true);
-                    } catch (e) {
-                        alert("Failed to clear storage: " + e.message);
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape") {
+            closeSettings();
+        }
+    });
+
+    const panelEl = document.getElementById("settings-panel");
+    if (panelEl) {
+        const focusableEls = panelEl.querySelectorAll("button, input, select, textarea, [tabindex]:not([tabindex='-1'])");
+        if (focusableEls.length > 0) {
+            const firstEl = focusableEls[0];
+            const lastEl = focusableEls[focusableEls.length - 1];
+            panelEl.addEventListener("keydown", e => {
+                if (e.key !== "Tab") return;
+                if (e.shiftKey) {
+                    if (document.activeElement === firstEl) {
+                        e.preventDefault();
+                        lastEl.focus();
                     }
+                } else if (document.activeElement === lastEl) {
+                    e.preventDefault();
+                    firstEl.focus();
                 }
-            }
-        });
+            });
+        }
     }
 }
 
@@ -156,11 +165,6 @@ function openSettings() {
     }
     overlay.classList.add("visible");
     panel.classList.add("visible");
-
-    // Update storage usage every time settings are opened
-    if (typeof updateStorageUsage === "function") {
-        updateStorageUsage();
-    }
 }
 
 function closeSettings() {
@@ -290,35 +294,5 @@ function loadSettings() {
         } catch {
             localStorage.removeItem("userSettings");
         }
-    }
-}
-
-function updateStorageUsage() {
-    const container = document.getElementById("storage-info-container");
-    if (!container) return;
-
-    let totalBytes = 0;
-    try {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key) {
-                const value = localStorage.getItem(key);
-                totalBytes += (key.length + (value ? value.length : 0)) * 2;
-            }
-        }
-    } catch (e) {
-        console.warn("Could not calculate storage usage", e);
-    }
-
-    const QUOTA_BYTES = 5 * 1024 * 1024;
-    const percent = Math.min(100, Math.round((totalBytes / QUOTA_BYTES) * 100));
-    const usedKB = (totalBytes / 1024).toFixed(1);
-    const quotaMB = (QUOTA_BYTES / (1024 * 1024)).toFixed(0);
-
-    document.getElementById("storage-details").innerHTML = `Used: <strong>${usedKB} KB</strong> / ${quotaMB} MB <span style="color: #666">(${percent}% full)</span>`;
-
-    const progressBar = document.getElementById("storage-progress-bar");
-    if (progressBar) {
-        progressBar.style.width = `${percent}%`;
     }
 }
