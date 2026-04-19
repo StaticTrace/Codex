@@ -133,16 +133,11 @@ function setupSettingsUI() {
     const clearStorageBtn = document.getElementById("clear-storage-btn");
     if (clearStorageBtn) {
         clearStorageBtn.addEventListener("click", () => {
-            if (confirm("⚠️ This will permanently delete ALL data in LocalStorage (Codex entries, drafts, settings). Continue?")) {
-                try {
-                    localStorage.clear();
-                    updateStorageInfo();
-                    alert("LocalStorage has been cleared.");
-                    location.reload();
-                } catch (e) {
-                    console.error("Clear failed:", e);
-                    alert("Failed to clear storage.");
-                }
+            if (confirm("⚠️ This will permanently delete ALL data in LocalStorage (Codex entries, drafts, and settings). Continue?")) {
+                StorageHelper.clearAll();
+                updateStorageInfo();
+                alert("LocalStorage has been cleared.");
+                location.reload();
             }
         });
     }
@@ -284,38 +279,23 @@ function exportSettings() {
 }
 
 function saveSettings() {
-    localStorage.setItem("userSettings", JSON.stringify(Settings));
+    StorageHelper.safeSetItem("userSettings", JSON.stringify(Settings));
 }
 
 function loadSettings() {
-    const saved = localStorage.getItem("userSettings");
+    const saved = StorageHelper.safeGetItem("userSettings");
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
             Object.assign(Settings, parsed);
         } catch {
-            localStorage.removeItem("userSettings");
+            StorageHelper.safeRemoveItem("userSettings");
         }
-    }
-}
-
-function getLocalStorageSize() {
-    let total = 0;
-    try {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            const value = localStorage.getItem(key);
-            total += (key ? key.length : 0) + (value ? value.length : 0);
-        }
-        return total * 2; // UTF-16 bytes approximation
-    } catch (e) {
-        console.warn("localStorage usage detection failed:", e);
-        return 0;
     }
 }
 
 function updateStorageInfo() {
-    const usedBytes = getLocalStorageSize();
+    const usedBytes = StorageHelper.getSize();
     const QUOTA_BYTES = 5242880; // 5 MB typical quota
     const usedKB = Math.round(usedBytes / 1024);
     const quotaMB = (QUOTA_BYTES / (1024 * 1024)).toFixed(1);

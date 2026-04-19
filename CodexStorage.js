@@ -7,23 +7,6 @@
 
     let memoryStore = [];
 
-    function safeGetItem(key) {
-        try {
-            return localStorage.getItem(key);
-        } catch (e) {
-            console.warn("localStorage getItem failed, using memory store:", e);
-            return null;
-        }
-    }
-
-    function safeSetItem(key, value) {
-        try {
-            localStorage.setItem(key, value);
-        } catch (e) {
-            console.warn("localStorage setItem failed, using memory store:", e);
-        }
-    }
-
     function generateId() {
         if (window.crypto && typeof window.crypto.randomUUID === "function") {
             return window.crypto.randomUUID();
@@ -53,7 +36,7 @@
     }
 
     function loadEntries() {
-        const raw = safeGetItem(STORAGE_KEY);
+        const raw = window.StorageHelper.safeGetItem(STORAGE_KEY);
         if (!raw) {
             return memoryStore.slice();
         }
@@ -72,7 +55,7 @@
         const normalized = normalizeEntries(entries);
         memoryStore = normalized.slice();
         try {
-            safeSetItem(STORAGE_KEY, JSON.stringify(normalized));
+            window.StorageHelper.safeSetItem(STORAGE_KEY, JSON.stringify(normalized));
         } catch (e) {
             console.error("Failed to save entries:", e);
         }

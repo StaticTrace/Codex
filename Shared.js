@@ -41,6 +41,55 @@
     }
 
     /* -----------------------------
+       CENTRALIZED LOCALSTORAGE HELPER
+    ----------------------------- */
+    window.StorageHelper = {
+        safeGetItem(key) {
+            try {
+                return localStorage.getItem(key);
+            } catch (e) {
+                console.warn("localStorage getItem failed:", e);
+                return null;
+            }
+        },
+        safeSetItem(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (e) {
+                console.warn("localStorage setItem failed:", e);
+            }
+        },
+        safeRemoveItem(key) {
+            try {
+                localStorage.removeItem(key);
+            } catch (e) {
+                console.warn("localStorage removeItem failed:", e);
+            }
+        },
+        getSize() {
+            let total = 0;
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    total += (key ? key.length : 0) + (value ? value.length : 0);
+                }
+                return total * 2; // UTF-16 bytes approximation
+            } catch (e) {
+                console.warn("localStorage usage detection failed:", e);
+                return 0;
+            }
+        },
+        clearAll() {
+            try {
+                localStorage.clear();
+            } catch (e) {
+                console.error("localStorage clear failed:", e);
+            }
+        }
+    };
+
+    /* -----------------------------
        SETTINGS PANEL LOADING
     ----------------------------- */
     function loadSettingsPanel() {
