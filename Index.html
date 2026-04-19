@@ -2,31 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shared Resources</title>
-
     <link rel="stylesheet" href="Styles.css">
-
-    <!-- Shared navigation + settings loader -->
     <script src="Shared.js" defer></script>
-
-    <!-- Settings logic -->
     <script src="Settings.js" defer></script>
 </head>
-
 <body>
     <header>
         <h1>Shared Resources</h1>
         <nav id="global-nav"></nav>
         <button id="settings-button" aria-label="Open settings">⚙️</button>
+        <div id="global-settings"></div>
     </header>
 
     <main>
-        <h2>Resources</h2>
-        <p>Choose a section from the navigation above.</p>
-    </main>
+        <h2>Welcome</h2>
+        <p>This is the shared resources index.</p>
 
-    <!-- Settings panel gets injected here -->
-    <div id="global-settings"></div>
+        <ul>
+            <li><a href="Home.html">Home</a></li>
+            <li><a href="Codex.html">Codex</a></li>
+            <li><a href="Entries.html">Entries</a></li>
+        </ul>
+    </main>
 </body>
 </html>
