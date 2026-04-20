@@ -85,10 +85,30 @@
             request.onsuccess = async () => {
                 let entries = request.result || [];
                 if (entries.length === 0) {
+                    let loaded = false;
                     const migrated = await migrateFromLocalStorage();
                     if (migrated && migrated.length > 0) {
                         entries = migrated;
                         await saveEntries(entries);
+                        loaded = true;
+                    }
+                    if (!loaded) {
+                        // Load default entries from static JSON file on first run
+                        try {
+                            const response = await fetch("default-entries.json");
+                            if (response.ok) {
+                                const defaultData = await response.json();
+                                const normalizedDefaults = normalizeEntries(defaultData);
+                                if (normalizedDefaults.length > 0) {
+                                    entries = normalizedDefaults;
+                                    await saveEntries(entries);
+                                    console.log("[CodexStorage] Loaded default entries from default-entries.json");
+                                    loaded = true;
+                                }
+                            }
+                        } catch (err) {
+                            console.warn("[CodexStorage] Could not load default entries:", err);
+                        }
                     }
                 }
                 const normalized = normalizeEntries(entries);

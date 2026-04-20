@@ -6,6 +6,7 @@ const CORE_ASSETS = [
   "Codex.html",
   "SettingsPanel.html",
   "manifest.json",
+  "default-entries.json",
 
   // Styles
   "Styles.css",

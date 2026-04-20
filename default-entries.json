@@ -1,0 +1,28 @@
+[
+  {
+    "id": "entry-1",
+    "title": "Welcome to Codex",
+    "category": "Getting Started",
+    "tags": ["demo", "welcome", "pwa"],
+    "content": "# Welcome to your Codex!\n\nThis is a **demo entry** to get you started.\n\nCodex is a fully offline-capable knowledge base with Markdown support.\n\n## Quick Tips\n- Use the command palette with **Ctrl+K**\n- [[Internal links]] work between entries\n- Everything is saved locally in IndexedDB\n\nEnjoy organizing your knowledge!",
+    "favorite": true,
+    "archived": false,
+    "pinned": true,
+    "createdAt": "2026-04-01T10:00:00.000Z",
+    "updatedAt": "2026-04-20T09:00:00.000Z",
+    "schemaVersion": 2
+  },
+  {
+    "id": "entry-2",
+    "title": "Markdown Cheatsheet",
+    "category": "Reference",
+    "tags": ["markdown", "help"],
+    "content": "# Markdown Support\n\n**Bold**, *italic*, ~~strikethrough~~\n\n## Lists\n- Unordered\n1. Ordered\n\n> Blockquote\n\n`inline code`\n\n```javascript\n// Code block\nconsole.log('Hello from Codex!');\n```",
+    "favorite": false,
+    "archived": false,
+    "pinned": false,
+    "createdAt": "2026-04-02T10:00:00.000Z",
+    "updatedAt": "2026-04-02T10:00:00.000Z",
+    "schemaVersion": 2
+  }
+]
