@@ -785,7 +785,7 @@
 
                 card.appendChild(editBody);
 
-                // Footer buttons
+                // Footer buttons - REFINED EDITING UX: added permanent Delete button
                 const footer = document.createElement("footer");
                 footer.className = "codex-card-footer";
 
@@ -827,10 +827,25 @@
                     showToast(entry.archived ? "Archived" : "Restored");
                 });
 
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete";
+                deleteBtn.className = "codex-delete-button";
+                deleteBtn.style.backgroundColor = "#d32f2f";
+                deleteBtn.addEventListener("click", async () => {
+                    if (confirm("Permanently delete this entry? This cannot be undone.")) {
+                        state.entries = state.entries.filter(e => e.id !== entry.id);
+                        await window.CodexStorage.saveEntries(state.entries);
+                        state.editingId = null;
+                        renderFilters();
+                        renderList();
+                        showToast("Entry deleted permanently");
+                    }
+                });
+
                 const btnGroup = document.createElement("div");
                 btnGroup.style.display = "flex";
                 btnGroup.style.gap = "8px";
-                btnGroup.append(saveBtn, cancelBtn, archiveBtn);
+                btnGroup.append(saveBtn, cancelBtn, archiveBtn, deleteBtn);
                 footer.appendChild(btnGroup);
                 card.appendChild(footer);
             } else {

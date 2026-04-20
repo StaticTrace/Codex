@@ -128,20 +128,23 @@
             const store = transaction.objectStore(ENTRIES_STORE);
             const clearRequest = store.clear();
             clearRequest.onsuccess = () => {
-                let index = 0;
-                function putNext() {
-                    if (index >= normalized.length) {
-                        resolve();
-                        return;
-                    }
-                    const putRequest = store.put(normalized[index]);
-                    putRequest.onsuccess = () => {
-                        index++;
-                        putNext();
-                    };
-                    putRequest.onerror = () => reject(putRequest.error);
+                if (normalized.length === 0) {
+                    resolve();
+                    return;
                 }
-                putNext();
+                // === INDEXEDDB TRANSACTION OPTIMIZATION ===
+                // Parallel puts using Promise.all instead of recursive sequential calls.
+                // This dramatically improves performance for large entry sets while staying inside a single transaction.
+                const putPromises = normalized.map(entry => {
+                    return new Promise((res, rej) => {
+                        const putRequest = store.put(entry);
+                        putRequest.onsuccess = () => res();
+                        putRequest.onerror = () => rej(putRequest.error);
+                    });
+                });
+                Promise.all(putPromises)
+                    .then(() => resolve())
+                    .catch(err => reject(err));
             };
             clearRequest.onerror = () => reject(clearRequest.error);
         });
