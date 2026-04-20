@@ -38,11 +38,26 @@
             <!-- Populated by JS for dynamic buttons -->
         </div>
 
-        <!-- Enhanced Analytics Dashboard -->
-        <section id="analytics-dashboard">
-            <h3>Knowledge Base Stats</h3>
-            <div id="stats-content" class="home-stats-grid"></div>
-        </section>
+        <!-- Refined Dashboard Widgets Layout -->
+        <div class="dashboard-grid">
+            <!-- Enhanced Analytics Dashboard -->
+            <section id="analytics-dashboard" class="dashboard-widget">
+                <h3>Knowledge Base Stats</h3>
+                <div id="stats-content" class="home-stats-grid"></div>
+            </section>
+
+            <!-- Popular Tags Widget -->
+            <section class="dashboard-widget">
+                <h3>Popular Tags</h3>
+                <div id="popular-tags" class="widget-tags"></div>
+            </section>
+
+            <!-- Category Breakdown Widget -->
+            <section class="dashboard-widget">
+                <h3>Category Breakdown</h3>
+                <div id="category-breakdown" class="widget-categories"></div>
+            </section>
+        </div>
 
         <!-- Recent Entries -->
         <section class="recent-section">
@@ -114,6 +129,46 @@
                         <span style="font-size:2rem;">📅</span>
                     </div>
                 `;
+
+                // === NEW: Dashboard Widgets (Popular Tags + Category Breakdown) ===
+                // Popular Tags
+                const tagCounts = {};
+                entries.forEach(entry => {
+                    (entry.tags || []).forEach(tag => {
+                        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                    });
+                });
+                const topTags = Object.entries(tagCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 6);
+                const tagsEl = document.getElementById("popular-tags");
+                if (tagsEl) {
+                    tagsEl.innerHTML = topTags.length 
+                        ? topTags.map(([tag, count]) => `
+                            <span class="tag-pill">${tag}<span class="tag-count">${count}</span></span>
+                        `).join('') 
+                        : `<p style="color:#888;font-style:italic;">No tags yet. Add some in Codex!</p>`;
+                }
+
+                // Category Breakdown
+                const catCounts = {};
+                entries.forEach(entry => {
+                    const cat = entry.category;
+                    if (cat) {
+                        catCounts[cat] = (catCounts[cat] || 0) + 1;
+                    }
+                });
+                const topCats = Object.entries(catCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 5);
+                const catsEl = document.getElementById("category-breakdown");
+                if (catsEl) {
+                    catsEl.innerHTML = topCats.length 
+                        ? topCats.map(([cat, count]) => `
+                            <div class="category-item"><span>${cat}</span><span class="category-count">${count}</span></div>
+                        `).join('') 
+                        : `<p style="color:#888;font-style:italic;">No categories yet.</p>`;
+                }
 
                 // Render Recent Entries (clickable deep links)
                 const recentContainer = document.getElementById("recent-entries");
