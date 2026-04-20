@@ -38,7 +38,7 @@
             <!-- Populated by JS for dynamic buttons -->
         </div>
 
-        <!-- Refined Dashboard Widgets Layout -->
+        <!-- Refined Dashboard Widgets Layout + Analytics -->
         <div class="dashboard-grid">
             <!-- Enhanced Analytics Dashboard -->
             <section id="analytics-dashboard" class="dashboard-widget">
@@ -56,6 +56,12 @@
             <section class="dashboard-widget">
                 <h3>Category Breakdown</h3>
                 <div id="category-breakdown" class="widget-categories"></div>
+            </section>
+
+            <!-- NEW: Activity Trend Analytics Widget -->
+            <section class="dashboard-widget">
+                <h3>Activity Trend <span style="font-size:0.8rem;font-weight:400;opacity:0.7">(last 4 weeks)</span></h3>
+                <div id="activity-trend" class="trend-chart"></div>
             </section>
         </div>
 
@@ -168,6 +174,35 @@
                             <div class="category-item"><span>${cat}</span><span class="category-count">${count}</span></div>
                         `).join('') 
                         : `<p style="color:#888;font-style:italic;">No categories yet.</p>`;
+                }
+
+                // === NEW: Dashboard Analytics - Activity Trend (CSS bar chart) ===
+                const now = new Date();
+                const trendData = [];
+                for (let i = 3; i >= 0; i--) {
+                    const weekStart = new Date(now.getTime() - (i + 1) * 7 * 24 * 60 * 60 * 1000);
+                    const weekEnd = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+                    const count = entries.filter(e => {
+                        const updated = new Date(e.updatedAt);
+                        return updated >= weekStart && updated < weekEnd;
+                    }).length;
+                    const label = i === 0 ? 'This week' : `${i + 1} weeks ago`;
+                    trendData.push({ label, count });
+                }
+                const trendEl = document.getElementById("activity-trend");
+                if (trendEl) {
+                    const maxCount = Math.max(...trendData.map(d => d.count), 1);
+                    trendEl.innerHTML = `
+                        <div class="trend-bars">
+                            ${trendData.map(d => `
+                                <div class="trend-bar-container">
+                                    <div class="trend-bar" style="height: ${(d.count / maxCount) * 100}%"></div>
+                                    <span class="trend-label">${d.label}</span>
+                                    <span class="trend-value">${d.count}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
                 }
 
                 // Render Recent Entries (clickable deep links)
