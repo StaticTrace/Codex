@@ -3,26 +3,71 @@
     "id": "entry-1",
     "title": "Welcome to Codex",
     "category": "Getting Started",
-    "tags": ["demo", "welcome", "pwa"],
+    "tags": [
+      "demo",
+      "welcome",
+      "pwa"
+    ],
     "content": "# Welcome to your Codex!\n\nThis is a **demo entry** to get you started.\n\nCodex is a fully offline-capable knowledge base with Markdown support.\n\n## Quick Tips\n- Use the command palette with **Ctrl+K**\n- [[Internal links]] work between entries\n- Everything is saved locally in IndexedDB\n\nEnjoy organizing your knowledge!",
     "favorite": true,
-    "archived": false,
+    "archived": true,
     "pinned": true,
     "createdAt": "2026-04-01T10:00:00.000Z",
-    "updatedAt": "2026-04-20T09:00:00.000Z",
+    "updatedAt": "2026-04-20T00:54:32.451Z",
     "schemaVersion": 2
   },
   {
     "id": "entry-2",
     "title": "Markdown Cheatsheet",
     "category": "Reference",
-    "tags": ["markdown", "help"],
+    "tags": [
+      "markdown",
+      "help"
+    ],
     "content": "# Markdown Support\n\n**Bold**, *italic*, ~~strikethrough~~\n\n## Lists\n- Unordered\n1. Ordered\n\n> Blockquote\n\n`inline code`\n\n```javascript\n// Code block\nconsole.log('Hello from Codex!');\n```",
+    "favorite": false,
+    "archived": true,
+    "pinned": false,
+    "createdAt": "2026-04-02T10:00:00.000Z",
+    "updatedAt": "2026-04-20T00:54:36.033Z",
+    "schemaVersion": 2
+  },
+  {
+    "id": "0cbe504b-130e-4a15-a062-e8c5438db4cd",
+    "title": "Essence of ROB Insurance",
+    "category": "Essences",
+    "tags": [
+      "ROB",
+      "Meta",
+      "Protection",
+      "Contracts",
+      "Immunity"
+    ],
+    "content": "By taking this essence, you gain but one benefit:\n\nYour abilities can never be compromised.  \nNo power, skill, or capability you possess can ever be drained, weakened, sealed, copied, altered, or interfered with unless you personally allow it. You maintain perfect control over every ability you have, able to adjust or disable them at will with absolute precision. No entity—cosmic, divine, narrative, or otherwise—can deceive, manipulate, or cheat you in any contract, deal, or empowerment. Any being that attempts to betray or exploit you is instantly erased or punished in whatever manner you choose. You remain entirely unaffected even if you choose to break a deal yourself.",
     "favorite": false,
     "archived": false,
     "pinned": false,
-    "createdAt": "2026-04-02T10:00:00.000Z",
-    "updatedAt": "2026-04-02T10:00:00.000Z",
+    "createdAt": "2026-04-20T00:28:26.468Z",
+    "updatedAt": "2026-04-20T00:28:26.468Z",
+    "schemaVersion": 2
+  },
+  {
+    "id": "f404b4cd-84d2-4fc8-af30-1eeba9ec4b23",
+    "title": "Essence of the Blank",
+    "category": "Essences",
+    "tags": [
+      "Essence",
+      "Potential",
+      "Learning",
+      "Mastery",
+      "Limitless"
+    ],
+    "content": "By taking this essence, you gain but one benefit:\n\n**Your potential becomes limitless.** You can learn any discipline or skillset, even if you shouldn't be capable of it, without forgetting it and practice them into mastery, no matter how many you learn. Any abilities you have from other Essences will increase where possible and develop in ways beyond their initial purposes.",
+    "favorite": true,
+    "archived": false,
+    "pinned": false,
+    "createdAt": "2026-04-19T18:50:22.366Z",
+    "updatedAt": "2026-04-20T00:44:18.844Z",
     "schemaVersion": 2
   }
 ]

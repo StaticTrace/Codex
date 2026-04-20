@@ -433,6 +433,27 @@
             showToast("Entries exported successfully");
         });
 
+        const defaultsButton = document.createElement("button");
+        defaultsButton.textContent = "Export as default-entries.json";
+        defaultsButton.className = "codex-tool-button";
+        defaultsButton.addEventListener("click", () => {
+            const entriesToSave = state.entries;
+            if (entriesToSave.length === 0) {
+                showToast("No entries to export as defaults", "error");
+                return;
+            }
+            const blob = new Blob([JSON.stringify(entriesToSave, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "default-entries.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("default-entries.json downloaded");
+        });
+
         const importLabel = document.createElement("label");
         importLabel.className = "codex-import-label";
         importLabel.textContent = "Import entries";
@@ -465,7 +486,7 @@
             showToast("All entries deleted", "success");
         });
 
-        toolsContainer.append(exportButton, importLabel, deleteAllButton);
+        toolsContainer.append(exportButton, defaultsButton, importLabel, deleteAllButton);
     }
 
     /* ----------------------------- 
