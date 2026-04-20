@@ -892,7 +892,7 @@
     }
 
     /* ----------------------------- 
-       INIT + KEYBOARD SHORTCUT + OFFLINE 
+       INIT + KEYBOARD SHORTCUT + OFFLINE + DEEP LINK SUPPORT 
     ----------------------------- */
     async function initCodexUI() {
         try {
@@ -901,6 +901,17 @@
             console.error("Failed to load entries:", e);
             state.entries = [];
         }
+
+        // === NEW: Deep link support from Home Dashboard (?edit=ID) ===
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get("edit");
+        if (editId && state.entries.some(e => e.id === editId)) {
+            state.editingId = editId;
+            // Clean the URL so the deep link doesn't persist on refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+            console.log(`[CodexUI] Deep link activated — auto-opening entry ${editId}`);
+        }
+
         safeLoadDraft();
         loadFilters();
 
@@ -936,7 +947,7 @@
             await window.CodexStorage.processSyncQueue();
         }
 
-        console.log("[CodexUI] Full feature set loaded: command palette, wiki links, archive, toolbar, templates, pinned entries");
+        console.log("[CodexUI] Full feature set loaded: command palette, wiki links, archive, toolbar, templates, pinned entries, deep linking");
     }
 
     document.addEventListener("DOMContentLoaded", initCodexUI);

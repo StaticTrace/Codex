@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
+    <title>Codex • Dashboard</title>
     <link rel="stylesheet" href="Styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#58a6ff">
@@ -23,7 +23,7 @@
 </head>
 <body>
     <header>
-        <h1>Home</h1>
+        <h1>📊 Dashboard</h1>
         <nav id="global-nav"></nav>
         <button id="settings-button" aria-label="Open settings">⚙️</button>
         <div id="global-settings" tabindex="-1">
@@ -31,63 +31,151 @@
     </header>
 
     <main>
-        <h2>Welcome</h2>
-        <p>This is the home page for your tools and resources.</p>
+        <p style="margin-bottom: 2rem; font-size: 1.1rem; opacity: 0.85;">Your fully offline knowledge base. Everything stays local and instantly available.</p>
 
-        <section>
-            <h3>Codex</h3>
-            <p>The Codex is your structured knowledge base with Markdown support, filters, and export/import tools.</p>
-            <p><a href="Codex.html">Open Codex</a></p>
-        </section>
+        <!-- Quick Actions -->
+        <div id="quick-actions" class="codex-tools" style="margin-bottom: 40px; justify-content: flex-start; flex-wrap: wrap;">
+            <!-- Populated by JS for dynamic buttons -->
+        </div>
 
-        <!-- NEW: Analytics Dashboard -->
-        <section id="analytics-dashboard" style="margin-top:40px;">
+        <!-- Enhanced Analytics Dashboard -->
+        <section id="analytics-dashboard">
             <h3>Knowledge Base Stats</h3>
-            <div id="stats-content" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;"></div>
+            <div id="stats-content" class="home-stats-grid"></div>
         </section>
+
+        <!-- Recent Entries -->
+        <section class="recent-section">
+            <h3>Recent Entries <span style="font-size:0.85rem; font-weight:400; opacity:0.7;">(tap to open &amp; edit instantly)</span></h3>
+            <div id="recent-entries" class="recent-list"></div>
+        </section>
+
+        <!-- Tip / Next Steps -->
+        <div style="margin-top:48px; padding:20px; background:var(--card-bg); border-radius:var(--border-radius); box-shadow:var(--card-shadow); font-size:0.95rem; display:flex; align-items:center; gap:12px;">
+            <span style="font-size:1.8rem;">💡</span>
+            <div>
+                <strong>Pro tip:</strong> Press <kbd style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-family:monospace;">Ctrl</kbd> + <kbd style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-family:monospace;">K</kbd> anywhere in the app to open the Command Palette.
+                <a href="Codex.html" style="margin-left:12px; color:var(--accent-color); text-decoration:underline;">Open full Codex →</a>
+            </div>
+        </div>
     </main>
 
     <script>
-        // Simple stats loader (runs on Home page)
-        async function loadHomeAnalytics() {
-            if (!window.CodexStorage) return;
+        // Improved Home Dashboard loader with stats, recent entries, quick actions, and deep-link support
+        async function loadHomeDashboard() {
+            if (!window.CodexStorage) {
+                console.warn("[Home] CodexStorage not ready yet");
+                return;
+            }
             try {
                 const entries = await window.CodexStorage.loadEntries();
+
                 const total = entries.length;
-                const archived = entries.filter(e => e.archived).length;
                 const pinned = entries.filter(e => e.pinned).length;
-                const uniqueTags = new Set(entries.flatMap(e => e.tags)).size;
+                const archived = entries.filter(e => e.archived).length;
+                const favorites = entries.filter(e => e.favorite).length;
+                const uniqueTags = new Set(entries.flatMap(e => e.tags || [])).size;
 
                 const weekAgo = new Date();
                 weekAgo.setDate(weekAgo.getDate() - 7);
                 const thisWeek = entries.filter(e => new Date(e.updatedAt) > weekAgo).length;
 
-                const container = document.getElementById("stats-content");
-                container.innerHTML = `
-                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
-                        <strong>Total Entries</strong><br><span style="font-size:2.5rem;">${total}</span>
+                // Render beautiful stats grid
+                const statsContainer = document.getElementById("stats-content");
+                statsContainer.innerHTML = `
+                    <div class="home-stat-card">
+                        <strong>Total Entries</strong>
+                        <div class="home-stat-value">${total}</div>
+                        <span style="font-size:2rem;">📚</span>
                     </div>
-                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
-                        <strong>Pinned</strong><br><span style="font-size:2.5rem;">${pinned}</span>
+                    <div class="home-stat-card">
+                        <strong>Pinned</strong>
+                        <div class="home-stat-value">${pinned}</div>
+                        <span style="font-size:2rem;">📌</span>
                     </div>
-                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
-                        <strong>Archived</strong><br><span style="font-size:2.5rem;">${archived}</span>
+                    <div class="home-stat-card">
+                        <strong>Archived</strong>
+                        <div class="home-stat-value">${archived}</div>
+                        <span style="font-size:2rem;">📦</span>
                     </div>
-                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
-                        <strong>Unique Tags</strong><br><span style="font-size:2.5rem;">${uniqueTags}</span>
+                    <div class="home-stat-card">
+                        <strong>Favorites</strong>
+                        <div class="home-stat-value">${favorites}</div>
+                        <span style="font-size:2rem;">⭐</span>
                     </div>
-                    <div style="background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:var(--card-shadow);">
-                        <strong>Updated this week</strong><br><span style="font-size:2.5rem;">${thisWeek}</span>
+                    <div class="home-stat-card">
+                        <strong>Unique Tags</strong>
+                        <div class="home-stat-value">${uniqueTags}</div>
+                        <span style="font-size:2rem;">🏷️</span>
+                    </div>
+                    <div class="home-stat-card">
+                        <strong>Updated this week</strong>
+                        <div class="home-stat-value">${thisWeek}</div>
+                        <span style="font-size:2rem;">📅</span>
                     </div>
                 `;
+
+                // Render Recent Entries (clickable deep links)
+                const recentContainer = document.getElementById("recent-entries");
+                const sortedRecent = [...entries]
+                    .filter(e => !e.archived)
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                    .slice(0, 6);
+
+                if (sortedRecent.length === 0) {
+                    recentContainer.innerHTML = `
+                        <div class="codex-empty" style="text-align:left;padding:40px 20px;">
+                            <p>No entries yet.</p>
+                            <a href="Codex.html" class="codex-tool-button" style="display:inline-block;margin-top:12px;">Create your first entry →</a>
+                        </div>
+                    `;
+                } else {
+                    recentContainer.innerHTML = sortedRecent.map(entry => `
+                        <a href="Codex.html?edit=${encodeURIComponent(entry.id)}" class="recent-item">
+                            <div style="width:48px;height:48px;background:rgba(88,166,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📝</div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-weight:600;line-height:1.3;">${entry.title}</div>
+                                ${entry.category ? `<div style="font-size:0.85rem;color:#777;margin-top:3px;">${entry.category}</div>` : ''}
+                            </div>
+                            <div style="text-align:right;font-size:0.8rem;white-space:nowrap;color:#666;">
+                                ${new Date(entry.updatedAt).toLocaleDateString(undefined, {month:'short', day:'numeric'})}
+                            </div>
+                        </a>
+                    `).join('');
+                }
+
+                // Quick Actions bar
+                const quickContainer = document.getElementById("quick-actions");
+                quickContainer.innerHTML = `
+                    <button onclick="window.location.href='Codex.html'" class="codex-tool-button">✏️ Open Codex</button>
+                    <button onclick="handleExportAll()" class="codex-tool-button">📤 Export All</button>
+                    <button onclick="window.location.href='Codex.html'" class="codex-tool-button">➕ New Entry</button>
+                    <button onclick="window.location.href='Codex.html'" class="codex-tool-button">🔍 Browse All</button>
+                `;
+
+                console.log(`[Home Dashboard] Loaded successfully — ${total} entries, ${sortedRecent.length} recent`);
             } catch (e) {
-                console.warn("Analytics load failed", e);
+                console.error("[Home Dashboard] Load failed:", e);
+                const statsContainer = document.getElementById("stats-content");
+                statsContainer.innerHTML = `<p style="grid-column:1/-1;color:#e74c3c;padding:20px;text-align:center;">Unable to load dashboard data</p>`;
             }
         }
 
-        // Run after storage is ready
+        // Export helper (available because CodexStorage is loaded)
+        window.handleExportAll = async () => {
+            if (window.CodexStorage && typeof window.CodexStorage.exportEntries === "function") {
+                try {
+                    await window.CodexStorage.exportEntries();
+                    // Toast will be shown by the export function itself
+                } catch (err) {
+                    console.warn("Export failed", err);
+                }
+            }
+        };
+
+        // Run dashboard after storage is ready
         window.addEventListener("load", () => {
-            setTimeout(loadHomeAnalytics, 800);
+            setTimeout(loadHomeDashboard, 350);
         });
     </script>
 </body>
