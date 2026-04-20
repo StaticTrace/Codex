@@ -1,4 +1,4 @@
-const CACHE_NAME = "codex-cache-v4";
+const CACHE_NAME = "codex-cache-v5";
 
 const CORE_ASSETS = [
   "index.html",
@@ -32,7 +32,7 @@ self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
-// Activate: remove old caches
+// Activate: remove old caches (debug/fix stale cache issues on GitHub Pages)
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -44,24 +44,42 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
-// Fetch: offline-first with background update
+// Fetch: hybrid strategy (Stale-While-Revalidate for most assets + Network-First for HTML)
+// This resolves common GitHub Pages caching staleness while keeping offline-first PWA behavior
 self.addEventListener("fetch", event => {
   const request = event.request;
 
   if (request.method !== "GET") return;
 
-  event.respondWith(
-    caches.match(request).then(cached => {
-      const fetchPromise = fetch(request)
+  // HTML documents: Network-First (fresh content) with cache fallback
+  if (request.destination === "document" || request.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(
+      fetch(request)
         .then(networkResponse => {
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, networkResponse.clone());
-          });
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, responseClone));
+          }
           return networkResponse;
         })
-        .catch(() => cached);
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-      return cached || fetchPromise;
+  // All other static assets (CSS, JS, JSON, images): Stale-While-Revalidate
+  // Serve cache instantly, then update in background for best performance
+  event.respondWith(
+    caches.match(request).then(cachedResponse => {
+      const fetchPromise = fetch(request).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, responseClone));
+        }
+        return networkResponse;
+      });
+
+      return cachedResponse || fetchPromise;
     })
   );
 });
@@ -72,15 +90,12 @@ self.addEventListener("sync", event => {
     event.waitUntil(
       (async () => {
         console.log("[Service Worker] Background sync triggered for entries");
-        // In a real server-backed app: process syncQueue from IndexedDB and POST/PUT/DELETE to server
-        // For this local-only Codex: clear processed queue (demo)
         try {
           const db = await openCodexDB();
           const tx = db.transaction("syncQueue", "readwrite");
           const store = tx.objectStore("syncQueue");
           await store.clear();
           console.log("[Service Worker] Sync queue processed (local-only demo)");
-          // Notify clients (optional)
           self.clients.matchAll().then(clients => {
             clients.forEach(client => client.postMessage({ type: "SYNC_COMPLETE" }));
           });
