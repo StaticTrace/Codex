@@ -1,4 +1,4 @@
-const CACHE_NAME = "codex-cache-v5";
+const CACHE_NAME = "codex-cache-v6";
 
 const CORE_ASSETS = [
   "index.html",
@@ -32,37 +32,56 @@ self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
-// Activate: remove old caches (debug/fix stale cache issues on GitHub Pages)
+// Activate: remove old caches + enable navigation preload for faster PWA navigation (GitHub Pages + offline performance)
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      )
-    )
+    Promise.all([
+      caches.keys().then(keys =>
+        Promise.all(
+          keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+        )
+      ),
+      (async () => {
+        if ('navigationPreload' in self.registration) {
+          await self.registration.navigationPreload.enable();
+          console.log("[Service Worker] Navigation preload enabled for improved PWA performance");
+        }
+      })()
+    ])
   );
   self.clients.claim();
 });
 
-// Fetch: hybrid strategy (Stale-While-Revalidate for most assets + Network-First for HTML)
+// Fetch: hybrid strategy (Network-First for HTML + navigation preload support + Stale-While-Revalidate for assets)
 // This resolves common GitHub Pages caching staleness while keeping offline-first PWA behavior
 self.addEventListener("fetch", event => {
   const request = event.request;
 
   if (request.method !== "GET") return;
 
-  // HTML documents: Network-First (fresh content) with cache fallback
+  // HTML documents: Network-First (fresh content) with cache fallback + preload support
   if (request.destination === "document" || request.headers.get("accept")?.includes("text/html")) {
     event.respondWith(
-      fetch(request)
-        .then(networkResponse => {
+      (async () => {
+        try {
+          // Use preload response if available (progressive enhancement)
+          const preloadResponse = await event.preloadResponse;
+          if (preloadResponse) {
+            const responseClone = preloadResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, responseClone));
+            return preloadResponse;
+          }
+
+          const networkResponse = await fetch(request);
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(request, responseClone));
           }
           return networkResponse;
-        })
-        .catch(() => caches.match(request))
+        } catch {
+          return caches.match(request);
+        }
+      })()
     );
     return;
   }

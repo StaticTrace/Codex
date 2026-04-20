@@ -3,7 +3,7 @@
   "name": "Codex",
   "short_name": "Codex",
   "lang": "en",
-  "description": "Offline-first Markdown knowledge base with tagging, filters, PWA install, IndexedDB sync, and GitHub Pages optimized caching.",
+  "description": "Offline-first Markdown knowledge base with tagging, filters, PWA install, IndexedDB sync, GitHub Pages optimized caching, multiple themes, command palette, and advanced editing UX.",
   "start_url": "Home.html",
   "scope": "./",
   "display": "standalone",
@@ -18,7 +18,8 @@
     "utilities",
     "education",
     "notes",
-    "personalization"
+    "personalization",
+    "lifestyle"
   ],
 
   "icons": [

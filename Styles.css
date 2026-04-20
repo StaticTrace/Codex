@@ -6,9 +6,9 @@
     --card-bg: #ffffff;
     /* NEW: Modern UI variables for improved layout & UX */
     --accent-color: #58a6ff;
-    --border-radius: 12px;
-    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+    --border-radius: 16px;
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.12);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
     --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -68,6 +68,22 @@ body[data-theme="ocean"] {
     --header-bg: #00695c;
     --header-text: #ffffff;
     --card-bg: #b2dfdb;
+}
+
+body[data-theme="neon"] {
+    --bg-color: #0f0f23;
+    --text-color: #00ffff;
+    --header-bg: #110033;
+    --header-text: #ff00ff;
+    --card-bg: #1a1a3d;
+}
+
+body[data-theme="cyber"] {
+    --bg-color: #0a0a0a;
+    --text-color: #00ff9f;
+    --header-bg: #220011;
+    --header-text: #ff0099;
+    --card-bg: #1f1f2e;
 }
 
 body[data-high-contrast="true"] {
@@ -165,6 +181,7 @@ main {
     box-shadow: var(--card-shadow);
     box-sizing: border-box;
     transition: var(--transition);
+    contain: layout;
 }
 
 /* Settings overlay & panel (kept but smoother) */
@@ -225,6 +242,14 @@ main {
 .section-reset,
 .reset-button {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* CSS Performance: layout containment + will-change for animated elements */
+.codex-card,
+.settings-panel,
+.toast {
+    will-change: transform;
+    contain: layout style;
 }
 
 .settings-header {
@@ -558,7 +583,7 @@ body[data-compact-mode="true"] .section-reset {
     display: none;
 }
 
-/* Codex list & cards - modern hover & layout */
+/* Codex list & cards - modern hover & layout (improved looks) */
 .codex-list {
     display: flex;
     flex-direction: column;
@@ -577,7 +602,7 @@ body[data-compact-mode="true"] .section-reset {
 }
 
 .codex-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-3px) scale(1.02);
     box-shadow: var(--card-shadow-hover);
 }
 
